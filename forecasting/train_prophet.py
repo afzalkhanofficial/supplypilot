@@ -222,6 +222,7 @@ def train_and_save(product_id: int, df: pd.DataFrame) -> Optional[pd.Timestamp]:
         pass
 
     model = Prophet(
+        stan_backend="CMDSTANPY",
         weekly_seasonality=True,
         yearly_seasonality=True,
         daily_seasonality=False,

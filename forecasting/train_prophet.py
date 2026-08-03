@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import cmdstanpy
 import pandas as pd
 from dotenv import load_dotenv
 from prophet import Prophet
@@ -32,6 +33,25 @@ sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
 from database.db import engine, test_connection  # noqa: E402
+
+
+def _ensure_stan_backend() -> None:
+    """Ensure CmdStan is installed and properly pointed to by cmdstanpy."""
+    try:
+        current_path = Path(cmdstanpy.cmdstan_path())
+        makefile = current_path / "makefile"
+        if not makefile.exists():
+            raise FileNotFoundError(f"CmdStan makefile missing at {current_path}")
+    except Exception:
+        logger.info("CmdStan backend missing or invalid — installing CmdStan...")
+        try:
+            installed_path = cmdstanpy.install_cmdstan()
+            cmdstanpy.set_cmdstan_path(installed_path)
+            logger.info("CmdStan installed and set to: %s", installed_path)
+        except Exception as exc:
+            logger.warning("CmdStan installation warning: %s", exc)
+
+
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -194,6 +214,13 @@ def train_and_save(product_id: int, df: pd.DataFrame) -> Optional[pd.Timestamp]:
         product_id, len(train_df), cutoff.date(), HOLDOUT_DAYS,
     )
 
+    try:
+        valid_path = cmdstanpy.cmdstan_path()
+        if (Path(valid_path) / "makefile").exists():
+            cmdstanpy.set_cmdstan_path(valid_path)
+    except Exception:
+        pass
+
     model = Prophet(
         weekly_seasonality=True,
         yearly_seasonality=True,
@@ -228,6 +255,8 @@ def main() -> None:
     if not test_connection():
         logger.error("Cannot reach the database — aborting.")
         sys.exit(1)
+
+    _ensure_stan_backend()
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 

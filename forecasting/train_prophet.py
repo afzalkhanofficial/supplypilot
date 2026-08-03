@@ -35,21 +35,35 @@ load_dotenv(PROJECT_ROOT / ".env")
 from database.db import engine, test_connection  # noqa: E402
 
 
+# Patch cmdstanpy.set_cmdstan_path so Prophet's internal call to broken wheel path is ignored if invalid
+_real_set_cmdstan_path = cmdstanpy.set_cmdstan_path
+
+
+def _safe_set_cmdstan_path(path: str) -> None:
+    try:
+        _real_set_cmdstan_path(path)
+    except ValueError:
+        pass  # Ignore invalid path overrides from Prophet internal init
+
+
+cmdstanpy.set_cmdstan_path = _safe_set_cmdstan_path
+
+
 def _ensure_stan_backend() -> None:
     """Ensure CmdStan is installed and properly pointed to by cmdstanpy."""
     try:
         current_path = Path(cmdstanpy.cmdstan_path())
-        makefile = current_path / "makefile"
-        if not makefile.exists():
+        if not (current_path / "makefile").exists():
             raise FileNotFoundError(f"CmdStan makefile missing at {current_path}")
     except Exception:
         logger.info("CmdStan backend missing or invalid — installing CmdStan...")
         try:
             installed_path = cmdstanpy.install_cmdstan()
-            cmdstanpy.set_cmdstan_path(installed_path)
+            _real_set_cmdstan_path(installed_path)
             logger.info("CmdStan installed and set to: %s", installed_path)
         except Exception as exc:
             logger.warning("CmdStan installation warning: %s", exc)
+
 
 
 

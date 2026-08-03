@@ -21,6 +21,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import cmdstanpy
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -32,6 +33,20 @@ sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
 from database.db import engine, test_connection  # noqa: E402
+
+# Patch cmdstanpy.set_cmdstan_path so Prophet's internal model_from_dict call doesn't fail on invalid wheel path
+_real_set_cmdstan_path = cmdstanpy.set_cmdstan_path
+
+
+def _safe_set_cmdstan_path(path: str) -> None:
+    try:
+        _real_set_cmdstan_path(path)
+    except ValueError:
+        pass
+
+
+cmdstanpy.set_cmdstan_path = _safe_set_cmdstan_path
+
 
 # ---------------------------------------------------------------------------
 # Logging

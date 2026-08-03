@@ -1,0 +1,61 @@
+# =====================================================================
+# SupplyPilot — .gitignore
+# =====================================================================
+
+# Environment secrets — never commit the real .env file
+.env
+
+# Raw data files — too large for git and contain no code
+data/raw/*.csv
+
+# Python byte-compiled / optimised files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# PyInstaller
+*.spec
+
+# Pytest cache
+.pytest_cache/
+.cache/
+
+# Mypy
+.mypy_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.coveragerc
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+
+# Editor-specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# NOTE: forecasting/models/ is intentionally NOT ignored.
+# Trained Prophet model files are small JSON artifacts (~tens of KB each)
+# and are committed so the deployed backend can load them without retraining.

@@ -1,0 +1,47 @@
+# SupplyPilot Render Deployment Infrastructure as Code (IaC)
+# See https://render.com/docs/yaml-spec for format details.
+
+services:
+  # Web service 1: FastAPI Backend
+  - type: web
+    name: supplypilot-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        fromDatabase:
+          name: supplypilot-db
+          property: connectionString
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+
+  # Web service 2: Streamlit Dashboard
+  - type: web
+    name: supplypilot-dashboard
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --theme.base dark
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: API_BASE_URL
+        fromService:
+          type: web
+          name: supplypilot-api
+          property: url
+
+databases:
+  # Managed PostgreSQL instance
+  - name: supplypilot-db
+    databaseName: supplypilot
+    user: supplypilot_user
+    plan: free

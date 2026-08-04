@@ -210,20 +210,34 @@ def scan_all_inventory(query: str = "") -> str:
         "OK":       sum(1 for r in results if r["risk_level"] == "OK"),
     }
 
-    # Record CRITICAL & WARNING items in the risk_alerts table for historical persistence
+    # Record CRITICAL & WARNING items in the risk_alerts table (deduplicated: max 1 alert per product per 24 hours)
     try:
         with _engine().begin() as conn:
             for r in results:
                 if r["risk_level"] in ("CRITICAL", "WARNING"):
                     sev = "high" if r["risk_level"] == "CRITICAL" else "medium"
                     msg = f"Product {r['product_id']} stock level is {r['risk_level']} ({r['days_of_cover']:.1f} days cover remaining)."
-                    conn.execute(
+                    
+                    # Check for an existing recent alert in the last 24 hours
+                    recent_alert = conn.execute(
                         text("""
-                            INSERT INTO risk_alerts (product_id, alert_type, message, severity, created_at)
-                            VALUES (:pid, 'inventory_stock_risk', :msg, :sev, NOW())
+                            SELECT id FROM risk_alerts
+                            WHERE product_id = :pid
+                              AND alert_type = 'inventory_stock_risk'
+                              AND created_at > NOW() - INTERVAL '24 hours'
+                            LIMIT 1
                         """),
-                        {"pid": r["product_id"], "msg": msg, "sev": sev},
-                    )
+                        {"pid": r["product_id"]},
+                    ).fetchone()
+
+                    if not recent_alert:
+                        conn.execute(
+                            text("""
+                                INSERT INTO risk_alerts (product_id, alert_type, message, severity, created_at)
+                                VALUES (:pid, 'inventory_stock_risk', :msg, :sev, NOW())
+                            """),
+                            {"pid": r["product_id"], "msg": msg, "sev": sev},
+                        )
     except Exception as exc:
         logger.warning("scan_all_inventory: failed to persist risk alerts — %s", exc)
 
@@ -331,51 +345,60 @@ def check_weather_risk(location: str = "London") -> str:
     import requests
 
     api_key = os.getenv("OPENWEATHER_API_KEY")
-    if api_key and api_key != "your_openweathermap_api_key_here":
-        try:
-            url = f"https://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}&units=metric"
-            resp = requests.get(url, timeout=10)
-            if resp.status_code == 200:
-                data = resp.json()
-                weather_desc = data["weather"][0]["description"]
-                temp = data["main"]["temp"]
-                wind_speed = data["wind"]["speed"]
-                is_severe = any(w in weather_desc.lower() for w in ["snow", "storm", "thunderstorm", "blizzard", "heavy rain"]) or wind_speed > 20.0
-                
-                status = "HIGH_RISK" if is_severe else "LOW_RISK"
-                impact = f"Severe weather detected ({weather_desc}, wind {wind_speed} m/s). Transport delays expected." if is_severe else f"Normal weather ({weather_desc}, {temp}°C). Transport routes clear."
-                
-                if is_severe:
-                    try:
-                        with _engine().begin() as conn:
-                            conn.execute(
-                                text("""
-                                    INSERT INTO risk_alerts (product_id, alert_type, message, severity, created_at)
-                                    VALUES (NULL, 'weather_warning', :msg, 'medium', NOW())
-                                """),
-                                {"msg": f"Weather risk alert for {location}: {impact}"},
-                            )
-                    except Exception:
-                        pass
+    if not api_key or api_key == "your_openweathermap_api_key_here":
+        return json.dumps({
+            "location": location,
+            "status": "UNAVAILABLE",
+            "error": f"Weather API key (OPENWEATHER_API_KEY) is not configured in environment. Cannot verify live weather risks for {location}."
+        })
 
-                return json.dumps({
-                    "location": location,
-                    "status": status,
-                    "condition": weather_desc,
-                    "temperature_c": temp,
-                    "wind_speed_m_s": wind_speed,
-                    "impact_assessment": impact,
-                })
-        except Exception as exc:
-            logger.warning("check_weather_risk API lookup failed: %s", exc)
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}&units=metric"
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            weather_desc = data["weather"][0]["description"]
+            temp = data["main"]["temp"]
+            wind_speed = data["wind"]["speed"]
+            is_severe = any(w in weather_desc.lower() for w in ["snow", "storm", "thunderstorm", "blizzard", "heavy rain"]) or wind_speed > 20.0
+            
+            status = "HIGH_RISK" if is_severe else "LOW_RISK"
+            impact = f"Severe weather detected ({weather_desc}, wind {wind_speed} m/s). Transport delays expected." if is_severe else f"Normal weather ({weather_desc}, {temp}°C). Transport routes clear."
+            
+            if is_severe:
+                try:
+                    with _engine().begin() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO risk_alerts (product_id, alert_type, message, severity, created_at)
+                                VALUES (NULL, 'weather_warning', :msg, 'medium', NOW())
+                            """),
+                            {"msg": f"Weather risk alert for {location}: {impact}"},
+                        )
+                except Exception:
+                    pass
 
-    # Standard realistic response when no API key is set or offline
-    return json.dumps({
-        "location": location,
-        "status": "NORMAL",
-        "condition": "Favorable / Normal",
-        "impact_assessment": f"No active severe weather warnings reported for {location}. Logistics channels operating normally."
-    })
+            return json.dumps({
+                "location": location,
+                "status": status,
+                "condition": weather_desc,
+                "temperature_c": temp,
+                "wind_speed_m_s": wind_speed,
+                "impact_assessment": impact,
+            })
+        else:
+            return json.dumps({
+                "location": location,
+                "status": "UNAVAILABLE",
+                "error": f"OpenWeather API returned HTTP {resp.status_code}: {resp.text}"
+            })
+    except Exception as exc:
+        logger.warning("check_weather_risk API lookup failed: %s", exc)
+        return json.dumps({
+            "location": location,
+            "status": "UNAVAILABLE",
+            "error": f"Could not reach OpenWeather API for {location}: {exc}"
+        })
 
 
 @tool
@@ -436,9 +459,10 @@ def check_supplier_news_risk(supplier_name: str = "") -> str:
         logger.warning("check_supplier_news_risk RSS feed lookup failed: %s", exc)
         return json.dumps({
             "supplier_query": supplier_name or "General Supply Chain",
-            "status": "NORMAL",
-            "risk_summary": "News feeds checked; no active disruption alerts detected."
+            "status": "UNAVAILABLE",
+            "error": f"Could not fetch news feeds: {exc}"
         })
+
 
 
 # ---------------------------------------------------------------------------

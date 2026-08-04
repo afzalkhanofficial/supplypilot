@@ -40,8 +40,9 @@ def insert_purchase_order(engine, product_id: int, quantity: int, reason: str) -
     """
     Core service function to create a new purchase order.
 
-    Used by both the REST API endpoint and the AI Agent tool to ensure
-    identical validation, calculation, and database insert behavior.
+    Used by both the REST API endpoint (POST /orders) and the AI Agent tool
+    (create_purchase_order) to ensure identical validation, cost calculations,
+    and database insert behavior.
     """
     if quantity <= 0:
         raise ValueError("Quantity must be greater than 0.")

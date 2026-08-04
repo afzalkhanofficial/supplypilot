@@ -135,3 +135,28 @@ def test_create_order_zero_quantity_422(client):
     }
     r = client.post("/orders", json=payload)
     assert r.status_code == 422
+
+
+def test_approve_order_increments_inventory_stock(client):
+    """Verifies that approving a purchase order increments the product's current_stock."""
+    # 1. Get initial inventory
+    inv_before = client.get(f"/inventory/{FIRST_PRODUCT_ID}").json()
+    stock_before = inv_before["current_stock"]
+
+    # 2. Create order for 15 units
+    order_qty = 15
+    payload = {
+        "product_id": FIRST_PRODUCT_ID,
+        "quantity": order_qty,
+        "reason": "Test stock increment on approval.",
+    }
+    oid = client.post("/orders", json=payload).json()["order_id"]
+
+    # 3. Approve order
+    r_approve = client.patch(f"/orders/{oid}/status", json={"status": "approved"})
+    assert r_approve.status_code == 200
+
+    # 4. Check inventory stock after approval
+    inv_after = client.get(f"/inventory/{FIRST_PRODUCT_ID}").json()
+    assert inv_after["current_stock"] == stock_before + order_qty
+

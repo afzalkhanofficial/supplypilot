@@ -865,7 +865,7 @@ CREATE INDEX idx_agent_interactions_created_at ON agent_interactions (created_at
 **Platform:** win32  
 **Plugins:** anyio-4.14.2  
 
-**Result: 65 passed, 0 failed in 197.61s (3m 17s)**
+**Result: 66 passed, 0 failed in 268.52s (4m 28s)**
 
 ```
 tests/test_health.py::test_health_returns_200                                 PASSED
@@ -916,6 +916,7 @@ tests/test_orders.py::test_get_order_unknown_404                              PA
 tests/test_orders.py::test_approve_then_reject_conflict                       PASSED
 tests/test_orders.py::test_create_order_unknown_product_404                   PASSED
 tests/test_orders.py::test_create_order_zero_quantity_422                     PASSED
+tests/test_orders.py::test_approve_order_increments_inventory_stock          PASSED
 tests/test_products.py::test_list_products_200                                PASSED
 tests/test_products.py::test_list_products_returns_all                        PASSED
 tests/test_products.py::test_list_products_schema                             PASSED
@@ -934,7 +935,7 @@ tests/test_products.py::test_forecast_all_known_products[262]                 PA
 tests/test_products.py::test_forecast_all_known_products[274]                 PASSED
 tests/test_products.py::test_forecast_all_known_products[310]                 PASSED
 
-==================== 65 passed in 197.61s (0:03:17) ====================
+==================== 66 passed in 268.52s (0:04:28) ====================
 ```
 
 **Coverage gaps:** No tests for `agent/` (would require mocking Groq API), `dashboard/` (Streamlit testing is complex), or `forecasting/train_*.py` (training scripts). No load/stress tests.

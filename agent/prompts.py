@@ -33,6 +33,10 @@ You have access to the following tools:
 - create_purchase_order    — Write a new purchase order to the database with
                              status='pending' for human approval.
 - get_recent_risk_alerts   — Retrieve the most recent risk alerts from the DB.
+- check_weather_risk       — Check weather conditions and forecasts for transport
+                             and supply disruption risks.
+- check_supplier_news_risk — Check recent news RSS feeds for supplier strikes,
+                             port delays, or shortage events.
 
 RULES
 -----

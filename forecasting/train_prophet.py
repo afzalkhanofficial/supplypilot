@@ -35,18 +35,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 from database.db import engine, test_connection  # noqa: E402
 
 
-# Patch cmdstanpy.set_cmdstan_path so Prophet's internal call to broken wheel path is ignored if invalid
-_real_set_cmdstan_path = cmdstanpy.set_cmdstan_path
-
-
-def _safe_set_cmdstan_path(path: str) -> None:
-    try:
-        _real_set_cmdstan_path(path)
-    except ValueError:
-        pass  # Ignore invalid path overrides from Prophet internal init
-
-
-cmdstanpy.set_cmdstan_path = _safe_set_cmdstan_path
+import forecasting.prophet_patch  # noqa: F401
 
 
 def _ensure_stan_backend() -> None:

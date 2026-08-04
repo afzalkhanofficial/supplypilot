@@ -34,18 +34,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 from database.db import engine, test_connection  # noqa: E402
 
-# Patch cmdstanpy.set_cmdstan_path so Prophet's internal model_from_dict call doesn't fail on invalid wheel path
-_real_set_cmdstan_path = cmdstanpy.set_cmdstan_path
-
-
-def _safe_set_cmdstan_path(path: str) -> None:
-    try:
-        _real_set_cmdstan_path(path)
-    except ValueError:
-        pass
-
-
-cmdstanpy.set_cmdstan_path = _safe_set_cmdstan_path
+import forecasting.prophet_patch  # noqa: F401
 
 
 # ---------------------------------------------------------------------------

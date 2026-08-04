@@ -33,6 +33,72 @@ def _engine():
 
 
 # ---------------------------------------------------------------------------
+# Core Service Helper
+# ---------------------------------------------------------------------------
+
+def insert_purchase_order(engine, product_id: int, quantity: int, reason: str) -> dict:
+    """
+    Core service function to create a new purchase order.
+
+    Used by both the REST API endpoint and the AI Agent tool to ensure
+    identical validation, calculation, and database insert behavior.
+    """
+    if quantity <= 0:
+        raise ValueError("Quantity must be greater than 0.")
+
+    with engine.connect() as conn:
+        inv_row = conn.execute(
+            text("""
+                SELECT unit_cost, supplier_name
+                FROM   inventory
+                WHERE  product_id = :pid
+            """),
+            {"pid": product_id},
+        ).fetchone()
+
+    if inv_row is None:
+        raise KeyError(f"No inventory record for product_id={product_id}.")
+
+    unit_cost = float(inv_row[0])
+    supplier_name = str(inv_row[1])
+    estimated_cost = round(quantity * unit_cost, 2)
+
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("""
+                INSERT INTO purchase_orders
+                    (product_id, quantity, supplier_name,
+                     estimated_cost, status, agent_reasoning, created_at)
+                VALUES
+                    (:pid, :qty, :supplier, :cost, 'pending', :reason, NOW())
+                RETURNING id
+            """),
+            {
+                "pid": product_id,
+                "qty": quantity,
+                "supplier": supplier_name,
+                "cost": estimated_cost,
+                "reason": reason,
+            },
+        )
+        order_id = result.fetchone()[0]
+
+    return {
+        "order_id": order_id,
+        "product_id": product_id,
+        "quantity": quantity,
+        "supplier_name": supplier_name,
+        "estimated_cost": estimated_cost,
+        "status": "pending",
+        "message": (
+            f"Purchase order #{order_id} created for {quantity} units of "
+            f"product {product_id} from {supplier_name} "
+            f"(est. ${estimated_cost:,.2f}). Awaiting approval."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
@@ -98,59 +164,13 @@ def create_order(body: CreateOrderRequest):
     The order is NOT dispatched to the supplier — it waits for human
     approval via PATCH /orders/{id}/status.
     """
-    with _engine().connect() as conn:
-        inv_row = conn.execute(
-            text("""
-                SELECT unit_cost, supplier_name
-                FROM   inventory
-                WHERE  product_id = :pid
-            """),
-            {"pid": body.product_id},
-        ).fetchone()
-
-    if inv_row is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No inventory record for product_id={body.product_id}.",
-        )
-
-    unit_cost = float(inv_row[0])
-    supplier_name = str(inv_row[1])
-    estimated_cost = round(body.quantity * unit_cost, 2)
-
-    with _engine().begin() as conn:
-        result = conn.execute(
-            text("""
-                INSERT INTO purchase_orders
-                    (product_id, quantity, supplier_name,
-                     estimated_cost, status, agent_reasoning, created_at)
-                VALUES
-                    (:pid, :qty, :supplier, :cost, 'pending', :reason, NOW())
-                RETURNING id
-            """),
-            {
-                "pid": body.product_id,
-                "qty": body.quantity,
-                "supplier": supplier_name,
-                "cost": estimated_cost,
-                "reason": body.reason,
-            },
-        )
-        order_id = result.fetchone()[0]
-
-    return CreateOrderResponse(
-        order_id=order_id,
-        product_id=body.product_id,
-        quantity=body.quantity,
-        supplier_name=supplier_name,
-        estimated_cost=estimated_cost,
-        status="pending",
-        message=(
-            f"Purchase order #{order_id} created for {body.quantity} units of "
-            f"product {body.product_id} from {supplier_name} "
-            f"(est. ${estimated_cost:,.2f}). Awaiting approval."
-        ),
-    )
+    try:
+        res = insert_purchase_order(_engine(), body.product_id, body.quantity, body.reason)
+        return CreateOrderResponse(**res)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc).strip("'"))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.get(
@@ -197,8 +217,9 @@ def update_order_status(order_id: int, body: OrderStatusUpdate):
     """
     Transition a pending order to 'approved' or 'rejected'.
 
-    Sets decided_at to the current timestamp.  Only orders in 'pending'
-    status can be transitioned; others return 409 Conflict.
+    Sets decided_at to the current timestamp. When status is 'approved',
+    adds the ordered quantity to the product's inventory stock.
+    Only orders in 'pending' status can be transitioned; others return 409 Conflict.
     """
     with _engine().connect() as conn:
         current = conn.execute(
@@ -216,13 +237,26 @@ def update_order_status(order_id: int, body: OrderStatusUpdate):
         )
 
     with _engine().begin() as conn:
-        conn.execute(
+        row = conn.execute(
             text("""
                 UPDATE purchase_orders
                 SET    status = :status, decided_at = NOW()
                 WHERE  id = :oid
+                RETURNING product_id, quantity
             """),
             {"status": body.status, "oid": order_id},
-        )
+        ).fetchone()
+
+        if body.status == "approved" and row:
+            product_id, quantity = row[0], row[1]
+            conn.execute(
+                text("""
+                    UPDATE inventory
+                    SET    current_stock = current_stock + :qty,
+                           last_updated = NOW()
+                    WHERE  product_id = :pid
+                """),
+                {"qty": quantity, "pid": product_id},
+            )
 
     return get_order(order_id)

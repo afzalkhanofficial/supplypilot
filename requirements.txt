@@ -20,9 +20,6 @@ numpy==1.26.4
 prophet==1.1.6
 scikit-learn==1.5.2
 
-# Statistics (used in safety stock calculation)
-scipy==1.14.1
-
 # Database
 sqlalchemy==2.0.36
 psycopg2-binary==2.9.10

@@ -11,13 +11,13 @@ SupplyPilot is an end-to-end, production-ready AI supply chain optimization plat
   - **EOQ (Economic Order Quantity)**: Wilson's formula balancing order setup costs vs holding costs.
   - **Safety Stock**: Calibrated to target service level ($Z$-score table lookup).
   - **Reorder Point (ROP)**: Dynamic demand-during-lead-time thresholding.
-- **Autonomous Tool-Calling Agent**: LangChain agent equipped with 6 custom tools (`list_products`, `get_demand_forecast`, `get_inventory_status`, `scan_all_inventory`, `create_purchase_order`, `get_recent_risk_alerts`).
-- **RESTful FastAPI Service**: Clean OpenAPI specs with CORS, DB lifespan probes, and input validation.
+- **Autonomous Tool-Calling Agent**: LangChain agent equipped with 8 custom tools (`list_products`, `get_demand_forecast`, `get_inventory_status`, `scan_all_inventory`, `create_purchase_order`, `get_recent_risk_alerts`, `check_weather_risk`, `check_supplier_news_risk`).
+- **RESTful FastAPI Service**: Clean OpenAPI specs with CORS, DB lifespan probes, purchase order approval workflows that update live inventory stock, and input validation.
 - **Interactive Streamlit Dashboard**: Dark glassmorphism UI with 5 main pages:
   1. 📊 **Overview**: Fleet KPIs & risk summary table.
   2. 📦 **Inventory**: Per-product stock analysis & gauge metrics.
   3. 📈 **Demand Forecast**: Prophet forecast visualization with 80% CI band.
-  4. 🛒 **Purchase Orders**: Human-in-the-loop approval workflow & PO creation.
+  4. 🛒 **Purchase Orders**: Human-in-the-loop approval workflow (automatically restocking inventory on approval).
   5. 🤖 **Agent Chat**: Multi-turn conversational AI interface with tool audit logs.
 
 ---
@@ -35,9 +35,10 @@ flowchart TD
         API <--> Forecaster[Prophet Predictor\n20 Trained Model JSONs]
     end
 
-    Agent <--> Tools[6 Agent Tools]
+    Agent <--> Tools[8 Agent Tools]
     Tools <--> Inv
     Tools <--> Forecaster
+    Tools <--> External[Weather & News RSS APIs]
     Tools <--> DB[(PostgreSQL Database)]
     API <--> DB
 ```

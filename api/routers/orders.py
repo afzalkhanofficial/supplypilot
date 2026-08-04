@@ -220,35 +220,41 @@ def update_order_status(order_id: int, body: OrderStatusUpdate):
 
     Sets decided_at to the current timestamp. When status is 'approved',
     adds the ordered quantity to the product's inventory stock.
-    Only orders in 'pending' status can be transitioned; others return 409 Conflict.
+    Fully atomic: status transition is guarded by status='pending' in the UPDATE query
+    inside a single transaction, preventing double-click or concurrent double-restocking.
     """
-    with _engine().connect() as conn:
+    with _engine().begin() as conn:
         current = conn.execute(
             text("SELECT status FROM purchase_orders WHERE id = :oid"),
             {"oid": order_id},
         ).fetchone()
 
-    if current is None:
-        raise HTTPException(status_code=404, detail=f"Order {order_id} not found.")
+        if current is None:
+            raise HTTPException(status_code=404, detail=f"Order {order_id} not found.")
 
-    if current[0] != "pending":
-        raise HTTPException(
-            status_code=409,
-            detail=f"Order {order_id} is already '{current[0]}' and cannot be changed.",
-        )
+        if current[0] != "pending":
+            raise HTTPException(
+                status_code=409,
+                detail=f"Order {order_id} is already '{current[0]}' and cannot be changed.",
+            )
 
-    with _engine().begin() as conn:
         row = conn.execute(
             text("""
                 UPDATE purchase_orders
                 SET    status = :status, decided_at = NOW()
-                WHERE  id = :oid
+                WHERE  id = :oid AND status = 'pending'
                 RETURNING product_id, quantity
             """),
             {"status": body.status, "oid": order_id},
         ).fetchone()
 
-        if body.status == "approved" and row:
+        if row is None:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Order {order_id} was updated concurrently by another request.",
+            )
+
+        if body.status == "approved":
             product_id, quantity = row[0], row[1]
             conn.execute(
                 text("""
@@ -261,3 +267,4 @@ def update_order_status(order_id: int, body: OrderStatusUpdate):
             )
 
     return get_order(order_id)
+

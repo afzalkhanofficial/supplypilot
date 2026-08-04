@@ -1,18 +1,18 @@
 # 🚀 SupplyPilot — AI Supply Chain Optimization System
 
-SupplyPilot is an end-to-end, production-ready AI supply chain optimization platform. It combines **time-series demand forecasting** (Facebook Prophet), **classical inventory optimization math** (EOQ, Safety Stock, Reorder Point), a **LangChain tool-calling AI agent** powered by Groq (`llama-3.3-70b-versatile`), a **FastAPI REST backend**, and a modern **Streamlit interactive dashboard**.
+SupplyPilot is an end-to-end AI supply chain optimization platform. It combines **time-series demand forecasting** (Facebook Prophet), **classical inventory optimization math** (EOQ, Safety Stock, Reorder Point), a **LangChain tool-calling AI agent** powered by Groq (`llama-3.3-70b-versatile`), a **FastAPI REST backend**, and a modern **Streamlit interactive dashboard**.
 
 ---
 
 ## 🌟 Key Features
 
-- **Multi-Product Demand Forecasting**: Trained Facebook Prophet models for 20 retail products evaluating against a 42-day holdout set. Outperforms naive baseline by **-61.7% MAE**, **-65.1% RMSE**, and **-63.2% MAPE**.
+- **Multi-Product Demand Forecasting**: Trained Facebook Prophet models for 20 retail products evaluated against a 42-day holdout set. Outperforms 1-day lag naive baseline by **-61.7% MAE**, **-65.1% RMSE**, and **-63.2% MAPE**.
 - **Deterministic Inventory Optimization**:
   - **EOQ (Economic Order Quantity)**: Wilson's formula balancing order setup costs vs holding costs.
-  - **Safety Stock**: Calibrated to target service level ($Z$-score table lookup).
+  - **Safety Stock**: Calibrated to target service level ($Z$-score lookup).
   - **Reorder Point (ROP)**: Dynamic demand-during-lead-time thresholding.
 - **Autonomous Tool-Calling Agent**: LangChain agent equipped with 8 custom tools (`list_products`, `get_demand_forecast`, `get_inventory_status`, `scan_all_inventory`, `create_purchase_order`, `get_recent_risk_alerts`, `check_weather_risk`, `check_supplier_news_risk`).
-- **RESTful FastAPI Service**: Clean OpenAPI specs with CORS, DB lifespan probes, purchase order approval workflows that update live inventory stock, and input validation.
+- **RESTful FastAPI Service**: Clean OpenAPI specs with CORS, DB lifespan probes, purchase order approval workflows that update live inventory stock, and Pydantic input validation.
 - **Interactive Streamlit Dashboard**: Dark glassmorphism UI with 5 main pages:
   1. 📊 **Overview**: Fleet KPIs & risk summary table.
   2. 📦 **Inventory**: Per-product stock analysis & gauge metrics.
@@ -52,7 +52,7 @@ supplypilot/
 ├── agent/                  # LangChain AI agent, tools, and prompts
 │   ├── agent.py            # Agent executor runner & DB interaction logger
 │   ├── prompts.py          # System prompt & ChatPromptTemplate
-│   └── tools.py            # 6 LangChain @tool wrappers
+│   └── tools.py            # 8 LangChain @tool wrappers
 ├── api/                    # FastAPI REST API backend
 │   ├── main.py             # FastAPI app, CORS, lifespan probe & error handlers
 │   ├── schemas.py          # Pydantic request/response models
@@ -65,22 +65,24 @@ supplypilot/
 │   ├── app.py              # 5-page Streamlit web app with custom dark CSS
 │   └── api_client.py       # Requests-based HTTP client for API backend
 ├── database/               # PostgreSQL schema & SQLAlchemy ORM
-│   ├── db.py               # Engine & session setup
-│   ├── models.py           # SQLAlchemy tables
-│   └── schema.sql          # DDL script
+│   ├── db.py               # Engine, session setup & SQLAlchemy ORM models
+│   └── schema.sql          # PostgreSQL DDL script
 ├── forecasting/            # Time-series forecasting pipeline
 │   ├── models/prophet/     # 20 trained Prophet model JSON artifacts
-│   ├── evaluate.py         # Evaluation pipeline
+│   ├── evaluate.py         # Prophet vs baseline evaluation pipeline
+│   ├── model_comparison.md # Benchmark results table
+│   ├── prophet_patch.py    # CmdStanPy path safety patch
 │   ├── predict.py          # Read-only Prophet forecast interface
-│   ├── train_naive_baseline.py # Historical average baseline
+│   ├── train_naive_baseline.py # 1-day lag baseline script
 │   └── train_prophet.py    # Prophet training script
 ├── inventory/              # Classical inventory mathematics
 │   └── calculator.py       # EOQ, Safety Stock, ROP & recommendation logic
 ├── scripts/                # Helper scripts & CLI runners
 │   ├── run_api.py          # FastAPI launcher
 │   ├── run_dashboard.py    # Streamlit launcher
-│   ├── seed_db.py          # Rossmann dataset seed script
-│   └── test_agent.py       # Agent verification test
+│   ├── seed_data.py        # Rossmann dataset seed script
+│   ├── test_agent.py       # Agent verification test
+│   └── test_inventory.py   # Inventory math verification script
 ├── tests/                  # Integration & unit test suite (pytest)
 │   ├── conftest.py         # Session TestClient fixture
 │   ├── test_health.py      # Health endpoint tests
@@ -97,13 +99,15 @@ supplypilot/
 
 ## 📊 Forecasting Benchmark Results
 
-Prophet was benchmarked against a 7-day Naive Moving Average Baseline on a 42-day holdout across 20 products:
+Prophet was benchmarked against a 1-day lag Naive Baseline on a 42-day holdout across 20 products:
 
 | Metric | Naive Baseline | Prophet Model | Improvement |
 |---|---|---|---|
-| **Mean Absolute Error (MAE)** | 3,117.7 units | **1,192.5 units** | **-61.7%** |
-| **Root Mean Squared Error (RMSE)** | 3,678.9 units | **1,283.4 units** | **-65.1%** |
-| **Mean Absolute Percentage Error (MAPE)** | 48.7% | **17.9%** | **-63.2%** |
+| **Mean Absolute Error (MAE)** | 2,099.5 units | **803.3 units** | **-61.7%** |
+| **Root Mean Squared Error (RMSE)** | 3,032.4 units | **1,058.8 units** | **-65.1%** |
+| **Mean Absolute Percentage Error (MAPE)** | 21.4% | **7.9%** | **-63.2%** |
+
+*Note: Evaluated on open-day sales data over the last 42 calendar days for each product.*
 
 ---
 
@@ -111,7 +115,7 @@ Prophet was benchmarked against a 7-day Naive Moving Average Baseline on a 42-da
 
 ### 1. Prerequisites
 - Python 3.11+
-- PostgreSQL database
+- PostgreSQL database (e.g. Supabase or local PostgreSQL)
 - Groq API Key ([Get one free at console.groq.com](https://console.groq.com))
 
 ### 2. Installation
@@ -135,14 +139,14 @@ cp .env.example .env
 ```
 Edit `.env`:
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/supplypilot
+DATABASE_URL=postgresql://postgres:your_password@db.xxxx.supabase.co:5432/postgres
 GROQ_API_KEY=gsk_your_groq_key_here
 API_BASE_URL=http://localhost:8000
 ```
 
 ### 4. Seed Database
 ```bash
-python scripts/seed_db.py
+python scripts/seed_data.py
 ```
 
 ### 5. Running the Application
@@ -169,18 +173,17 @@ pytest tests/ -v
 
 ## 🚀 Deployment (Render.com)
 
-The project includes a ready-to-use `render.yaml` for automatic deployment on Render:
+The project includes a ready-to-use `render.yaml` specification for Render deployment:
 
 1. Connect your GitHub repository to Render.
 2. Select **New Blueprint Instance**.
 3. Render automatically provisions:
-   - PostgreSQL Managed Database
-   - FastAPI Backend Service
-   - Streamlit Dashboard Service
-4. Supply your `GROQ_API_KEY` under Environment Variables in the Render dashboard.
+   - **FastAPI Backend Web Service** (`supplypilot-api`)
+   - **Streamlit Dashboard Web Service** (`supplypilot-dashboard`)
+4. Supply your `DATABASE_URL` and `GROQ_API_KEY` under Environment Variables in the Render dashboard.
 
 ---
 
 ## 📜 License
 
-MIT License. Designed and built with ❤️ by the Deepmind team.
+MIT License. Author: Afzal Khan.

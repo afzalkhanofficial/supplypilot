@@ -1,0 +1,125 @@
+SERVICE LEVEL AGREEMENT
+Northgate Wholesale — SupplyPilot Operations
+Agreement Reference: NGW-SLA-2024-002
+Effective Date: 1 April 2024
+
+================================================================================
+PARTIES
+================================================================================
+
+Supplier:  Northgate Wholesale plc, 55 Industrial Ring Road, Leeds, LS12 6EQ,
+           United Kingdom ("Northgate")
+
+Customer:  SupplyPilot Operations GmbH, 9 Warehouse District, Hamburg, Germany
+           ("Customer")
+
+================================================================================
+1. SERVICES COVERED
+================================================================================
+
+This SLA covers the supply of the following goods by Northgate to the Customer:
+  - Health and beauty accessories
+  - Vitamins, supplements, and OTC healthcare products
+  - Baby and infant care products
+
+================================================================================
+2. LEAD TIMES
+================================================================================
+
+2.1 Standard lead time: three (3) business days from order confirmation.
+
+2.2 Healthcare and OTC products subject to regulatory batch release:
+    add two (2) additional business days.
+
+2.3 Emergency replenishment:
+    Available for products with on-hand cover below 3 days. Emergency orders
+    are dispatched within 36 hours. Emergency surcharge: 12% of order value.
+    Maximum of four (4) emergency orders per rolling 90 days.
+
+================================================================================
+3. FILL RATE AND AVAILABILITY
+================================================================================
+
+3.1 Target fill rate: 97% on a rolling 28-day basis.
+
+3.2 Northgate must notify the Customer within 1 business day if availability
+    for any contracted SKU falls below 80%. The notification must include:
+      - Estimated back-in-stock date
+      - Quantity available for partial fulfilment
+      - Recommended substitute SKUs (where applicable)
+
+3.3 Chronic shortage (>14 consecutive days below 80% availability) triggers
+    a mandatory supplier review meeting within 5 business days.
+
+================================================================================
+4. QUALITY AND COMPLIANCE
+================================================================================
+
+4.1 All OTC healthcare products must carry valid UK MHRA (or EU equivalent)
+    product authorisation where legally required.
+
+4.2 Northgate maintains a GFSI-recognised food safety management certification
+    for any food-adjacent storage areas.
+
+4.3 Batch traceability: Northgate shall retain and provide batch/lot records
+    for a minimum of 5 years post-delivery, consistent with recall obligations.
+
+4.4 Product Recall: In the event of a voluntary or mandatory product recall,
+    Northgate shall notify the Customer within 2 hours of the recall decision
+    and provide batch details sufficient for the Customer to identify affected
+    stock within its own inventory.
+
+================================================================================
+5. PACKAGING AND LABELLING
+================================================================================
+
+5.1 All outer packaging must display:
+      - Northgate's article number and Customer's purchase order number
+      - Country of origin
+      - Batch/lot number and expiry date (where applicable)
+      - Quantity per carton
+
+5.2 Deviations from labelling requirements must be disclosed at order
+    confirmation. Unlabelled or mislabelled goods may be refused at goods-in
+    at the Customer's discretion, with return freight at Northgate's expense.
+
+================================================================================
+6. PENALTIES
+================================================================================
+
+6.1 Fill Rate Below 92% (28-day rolling):
+    Credit of 1.5% of the relevant invoice value per full percentage point
+    below 92%, capped at 8% of total affected invoice value.
+
+6.2 Late Delivery (>10% of lines in any calendar month):
+    Credit of EUR 200 per late delivery event above the 10% threshold.
+
+6.3 Recall Notification Delay (>2 hours):
+    EUR 500 per hour of delay beyond the 2-hour notification SLA.
+
+================================================================================
+7. FORECASTING AND COLLABORATION
+================================================================================
+
+7.1 The Customer provides a rolling 8-week demand forecast to Northgate every
+    Monday. Northgate uses this for production and procurement planning only.
+
+7.2 Northgate participates in quarterly business reviews (QBR) with the
+    Customer's supply chain team. QBRs are scheduled by the Customer.
+
+================================================================================
+8. TERM
+================================================================================
+
+Initial term: 12 months from the Effective Date. Auto-renews for 12-month
+periods. Either party may exit with 60 days' written notice before renewal.
+
+================================================================================
+SIGNATURES
+================================================================================
+
+For Northgate Wholesale plc:    ___________________________  Date: ____________
+                                Director of Supply Chain
+
+For SupplyPilot Operations:     ___________________________  Date: ____________
+                                Head of Procurement

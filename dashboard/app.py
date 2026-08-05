@@ -33,11 +33,14 @@ from dashboard.api_client import (
     get_forecast,
     get_inventory,
     health,
+    ingest_document,
     list_alerts,
+    list_documents as list_docs,
     list_orders,
     list_products,
     reject_order,
     scan_inventory,
+    search_documents as search_docs,
 )
 
 # ---------------------------------------------------------------------------
@@ -228,7 +231,14 @@ with st.sidebar:
 
     page = st.radio(
         "Navigation",
-        ["📊  Overview", "📦  Inventory", "📈  Demand Forecast", "🛒  Purchase Orders", "🤖  Agent Chat"],
+        [
+            "📊  Overview",
+            "📦  Inventory",
+            "📈  Demand Forecast",
+            "🛒  Purchase Orders",
+            "🤖  Agent Chat",
+            "📄  Supplier Intelligence",
+        ],
         label_visibility="collapsed",
     )
 
@@ -639,3 +649,167 @@ elif page == "🤖  Agent Chat":
         if st.button("🗑️  Clear conversation"):
             st.session_state.chat_messages = []
             st.rerun()
+
+
+# ===========================================================================
+# PAGE 6 — SUPPLIER INTELLIGENCE (RAG)
+# ===========================================================================
+
+elif page == "📄  Supplier Intelligence":
+    st.markdown('<div class="page-title">Supplier Document Intelligence (RAG)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Semantic search across contracts, SLAs, and policies powered by vector embeddings</div>', unsafe_allow_html=True)
+
+    tab_search, tab_upload, tab_library = st.tabs([
+        "🔍  Semantic Document Search",
+        "📤  Upload & Ingest Document",
+        "📁  Document Library",
+    ])
+
+    with tab_search:
+        st.markdown('<div class="section-header">Ask or Search Supplier Documents</div>', unsafe_allow_html=True)
+
+        c1, c2, c3 = st.columns([3, 1.5, 1.5])
+        with c1:
+            q_input = st.text_input(
+                "Search query",
+                placeholder="e.g. What is the fill rate penalty for Apex Supply Co?",
+                label_visibility="collapsed",
+            )
+        with c2:
+            sup_filter = st.text_input(
+                "Supplier filter (optional)",
+                placeholder="All suppliers",
+                label_visibility="collapsed",
+            )
+        with c3:
+            doc_type_filter = st.selectbox(
+                "Doc Type",
+                ["All Types", "contract", "sla", "policy"],
+                label_visibility="collapsed",
+            )
+
+        top_k_val = st.slider("Top results (K)", min_value=1, max_value=10, value=5)
+
+        if st.button("🔎  Search Documents") or q_input:
+            if not q_input.strip():
+                st.warning("Please enter a search query.")
+            else:
+                with st.spinner("Embedding query & searching vector database..."):
+                    try:
+                        dtype_param = None if doc_type_filter == "All Types" else doc_type_filter
+                        sup_param = sup_filter.strip() if sup_filter.strip() else None
+                        search_res = search_docs(
+                            query=q_input.strip(),
+                            top_k=top_k_val,
+                            supplier_name=sup_param,
+                            doc_type=dtype_param,
+                        )
+
+                        if search_res.get("status") == "no_results":
+                            st.info(search_res.get("message", "No matching document chunks found."))
+                        elif search_res.get("status") == "ok":
+                            results = search_res.get("results", [])
+                            st.success(f"Found {len(results)} relevant document passage(s):")
+
+                            for res in results:
+                                sim_pct = int(res["similarity"] * 100)
+                                st.markdown(f"""
+                                <div style="background:rgba(30,41,59,0.8); border:1px solid rgba(99,179,237,0.25); border-radius:12px; padding:16px; margin-bottom:12px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                        <span style="font-weight:600; color:#63b3ed; font-size:1.05rem;">
+                                            📄 {res['filename']} (Rank #{res['rank']})
+                                        </span>
+                                        <span style="background:rgba(104,211,145,0.15); color:#68d391; border:1px solid rgba(104,211,145,0.3); border-radius:12px; padding:2px 10px; font-size:0.8rem; font-weight:600;">
+                                            {sim_pct}% Relevance
+                                        </span>
+                                    </div>
+                                    <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:10px;">
+                                        <b>Supplier:</b> {res['supplier_name']} &nbsp;|&nbsp; <b>Type:</b> {res['doc_type'].upper()} &nbsp;|&nbsp; <b>Chunk:</b> #{res['chunk_index']}
+                                    </div>
+                                    <div style="background:rgba(15,23,42,0.9); border-left:3px solid #63b3ed; padding:12px 16px; border-radius:4px; font-size:0.9rem; line-height:1.5; color:#e2e8f0; white-space:pre-wrap;">{res['chunk_text']}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                    except APIError as exc:
+                        _api_error(exc)
+
+    with tab_upload:
+        st.markdown('<div class="section-header">Upload New Supplier Contract or SLA</div>', unsafe_allow_html=True)
+
+        uploaded_file = st.file_uploader(
+            "Choose a document (.pdf or .txt)",
+            type=["pdf", "txt"],
+            help="PDFs will be extracted using PyPDF; text files will be read directly.",
+        )
+
+        c_up1, c_up2 = st.columns(2)
+        with c_up1:
+            up_supplier = st.text_input("Supplier Name", placeholder="e.g. Apex Supply Co")
+        with c_up2:
+            up_doc_type = st.selectbox("Document Type", ["contract", "sla", "policy"])
+
+        if st.button("📤  Ingest & Vectorize Document"):
+            if not uploaded_file:
+                st.warning("Please select a file to upload.")
+            elif not up_supplier.strip():
+                st.warning("Please enter a supplier name.")
+            else:
+                with st.spinner("Extracting text, generating 384-dim vector embeddings & storing in pgvector..."):
+                    try:
+                        bytes_data = uploaded_file.read()
+                        ingest_res = ingest_document(
+                            file_name=uploaded_file.name,
+                            file_bytes=bytes_data,
+                            supplier_name=up_supplier.strip(),
+                            doc_type=up_doc_type,
+                        )
+
+                        status = ingest_res.get("status")
+                        if status == "ok":
+                            st.success(
+                                f"Successfully ingested **{ingest_res.get('filename')}**! "
+                                f"Stored {ingest_res.get('chunks_stored')} text chunks "
+                                f"(Doc ID: {ingest_res.get('document_id')})."
+                            )
+                        elif status == "duplicate":
+                            st.info(f"ℹ️ {ingest_res.get('message')}")
+                        else:
+                            st.error(f"Error: {ingest_res.get('message')}")
+                    except APIError as exc:
+                        _api_error(exc)
+
+    with tab_library:
+        st.markdown('<div class="section-header">Indexed Supplier Documents</div>', unsafe_allow_html=True)
+
+        try:
+            doc_data = list_docs()
+            docs = doc_data.get("documents", [])
+
+            # KPI metrics
+            col_m1, col_m2, col_m3 = st.columns(3)
+            with col_m1:
+                st.markdown(_kpi("Total Documents", str(len(docs)), "Indexed in vector database", "kpi-blue"), unsafe_allow_html=True)
+            with col_m2:
+                suppliers_count = len(set(d["supplier_name"] for d in docs))
+                st.markdown(_kpi("Suppliers Covered", str(suppliers_count), "Active suppliers with documents", "kpi-green"), unsafe_allow_html=True)
+            with col_m3:
+                doc_types_count = len(set(d["doc_type"] for d in docs))
+                st.markdown(_kpi("Document Types", str(doc_types_count), "SLAs, Contracts, & Policies", "kpi-purple"), unsafe_allow_html=True)
+
+            st.markdown("<br/>", unsafe_allow_html=True)
+
+            if docs:
+                df_docs = pd.DataFrame(docs)
+                df_docs = df_docs.rename(columns={
+                    "id": "Doc ID",
+                    "filename": "Filename",
+                    "supplier_name": "Supplier Name",
+                    "doc_type": "Doc Type",
+                    "page_count": "Pages",
+                    "uploaded_at": "Uploaded At",
+                })
+                st.dataframe(df_docs, use_container_width=True, hide_index=True)
+            else:
+                st.info("No supplier documents currently indexed.")
+        except APIError as exc:
+            _api_error(exc)
+

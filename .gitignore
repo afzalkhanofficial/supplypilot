@@ -2,8 +2,10 @@
 # SupplyPilot — .gitignore
 # =====================================================================
 
-# Environment secrets — never commit the real .env file
+# Environment secrets & private docs — never commit
 .env
+PROJECT_AUDIT.md
+
 
 # Raw data files — too large for git and contain no code
 data/raw/*.csv

@@ -197,3 +197,53 @@ class RiskAlertOut(BaseModel):
 class RiskAlertListResponse(BaseModel):
     alerts: list[RiskAlertOut]
     total: int
+
+
+# ---------------------------------------------------------------------------
+# Documents / RAG (Phase 8)
+# ---------------------------------------------------------------------------
+
+class DocumentIngestResponse(BaseModel):
+    status: str
+    document_id: Optional[int] = None
+    filename: Optional[str] = None
+    supplier_name: Optional[str] = None
+    doc_type: Optional[str] = None
+    chunks_stored: Optional[int] = None
+    page_count: Optional[int] = None
+    message: Optional[str] = None
+    sha256_hex: Optional[str] = None
+
+
+class SearchResultChunk(BaseModel):
+    rank: int
+    similarity: float
+    chunk_text: str
+    document_id: int
+    filename: str
+    supplier_name: str
+    doc_type: str
+    chunk_index: int
+
+
+class DocumentSearchResponse(BaseModel):
+    status: str
+    query: str
+    results: Optional[list[SearchResultChunk]] = None
+    message: Optional[str] = None
+
+
+class DocumentInfo(BaseModel):
+    id: int
+    filename: str
+    supplier_name: str
+    doc_type: str
+    page_count: Optional[int] = None
+    uploaded_at: Optional[str] = None
+
+
+class DocumentListResponse(BaseModel):
+    status: str
+    count: int
+    documents: list[DocumentInfo]
+

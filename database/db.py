@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Generator
 
 from dotenv import load_dotenv
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -87,6 +88,19 @@ engine = create_engine(
     # psycopg2 uses them by default, so we disable them here.
     connect_args={"options": "-c timezone=utc"},
 )
+
+# Register pgvector's psycopg2 type adapter so the driver can serialise
+# Python lists <-> PostgreSQL vector values on every connection it opens.
+from pgvector.psycopg2 import register_vector  # noqa: E402
+
+
+def _on_connect(dbapi_connection, connection_record):  # type: ignore[override]
+    """Register the pgvector type adapter on each new raw connection."""
+    register_vector(dbapi_connection)
+
+
+from sqlalchemy import event  # noqa: E402
+event.listen(engine, "connect", _on_connect)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -240,6 +254,60 @@ class AgentInteraction(Base):
     agent_answer: str = Column(Text, nullable=False)
     tools_used: str = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class Document(Base):
+    """
+    One row per uploaded supplier document (SLA, contract, policy, etc.).
+
+    sha256_hex is computed from the raw file bytes before ingestion so
+    that duplicate uploads are rejected cheaply without re-embedding.
+    page_count is populated during PDF extraction (None for plain text).
+    """
+
+    __tablename__ = "documents"
+
+    id: int = Column(Integer, primary_key=True, autoincrement=True)
+    filename: str = Column(String(500), nullable=False)
+    supplier_name: str = Column(String(200), nullable=False)
+    doc_type: str = Column(String(50), nullable=False)   # 'sla' | 'contract' | 'policy'
+    sha256_hex: str = Column(String(64), nullable=False, unique=True)
+    page_count: int = Column(Integer, nullable=True)
+    uploaded_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    chunks = relationship(
+        "DocumentChunk", back_populates="document", cascade="all, delete-orphan"
+    )
+
+
+class DocumentChunk(Base):
+    """
+    One text window extracted from a Document, plus its embedding vector.
+
+    embedding stores a 384-dimensional float vector produced by the
+    all-MiniLM-L6-v2 model.  chunk_index is 0-based within the parent
+    document and is used to reconstruct reading order when displaying
+    citations.
+    """
+
+    __tablename__ = "document_chunks"
+    __table_args__ = (
+        UniqueConstraint("document_id", "chunk_index", name="uq_chunk_doc_index"),
+    )
+
+    id: int = Column(BigInteger, primary_key=True, autoincrement=True)
+    document_id: int = Column(
+        Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    )
+    chunk_index: int = Column(Integer, nullable=False)
+    chunk_text: str = Column(Text, nullable=False)
+    embedding = Column(Vector(384), nullable=False)
+
+    document = relationship("Document", back_populates="chunks")
 
 
 # ---------------------------------------------------------------------------

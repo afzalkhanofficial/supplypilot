@@ -109,3 +109,45 @@ CREATE TABLE agent_interactions (
 );
 
 CREATE INDEX idx_agent_interactions_created_at ON agent_interactions (created_at DESC);
+
+-- ------------------------------------------------------------------
+-- documents  (Phase 8 — Supplier Document Intelligence)
+-- One row per uploaded supplier document.
+-- sha256_hex is a hex-encoded SHA-256 of the raw file bytes, used to
+-- reject duplicate uploads without re-embedding.
+-- ------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS documents (
+    id              SERIAL          PRIMARY KEY,
+    filename        VARCHAR(500)    NOT NULL,
+    supplier_name   VARCHAR(200)    NOT NULL,
+    doc_type        VARCHAR(50)     NOT NULL,   -- 'sla' | 'contract' | 'policy'
+    sha256_hex      CHAR(64)        NOT NULL UNIQUE,
+    page_count      INTEGER,
+    uploaded_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_supplier ON documents (supplier_name);
+CREATE INDEX IF NOT EXISTS idx_documents_uploaded  ON documents (uploaded_at DESC);
+
+-- ------------------------------------------------------------------
+-- document_chunks  (Phase 8)
+-- Each document is split into overlapping text windows.  The embedding
+-- column stores a 384-dimensional vector produced by all-MiniLM-L6-v2.
+-- chunk_index is 0-based within the parent document.
+-- ------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS document_chunks (
+    id              BIGSERIAL       PRIMARY KEY,
+    document_id     INTEGER         NOT NULL REFERENCES documents (id) ON DELETE CASCADE,
+    chunk_index     INTEGER         NOT NULL,
+    chunk_text      TEXT            NOT NULL,
+    embedding       VECTOR(384)     NOT NULL,
+    CONSTRAINT uq_chunk_doc_index UNIQUE (document_id, chunk_index)
+);
+
+-- IVFFlat index — 50 centroids is a good default for a corpus up to
+-- ~50 000 chunks; rebuild with more lists if the corpus grows beyond that.
+CREATE INDEX IF NOT EXISTS idx_chunks_embedding
+    ON document_chunks
+    USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 50);
+

@@ -1,0 +1,183 @@
+MASTER SUPPLY CONTRACT
+Pinnacle Trade Group — SupplyPilot Operations
+Contract Reference: PTG-MSC-2024-011
+Execution Date: 10 May 2024
+
+================================================================================
+PARTIES
+================================================================================
+
+Supplier:  Pinnacle Trade Group B.V., Breda Business Park, Unit 22,
+           4825 AA Breda, Netherlands ("Pinnacle")
+
+Customer:  SupplyPilot Operations GmbH, 9 Warehouse District, Hamburg, Germany
+           ("SupplyPilot" or "Customer")
+
+================================================================================
+ARTICLE 1 — SCOPE
+================================================================================
+
+1.1 Pinnacle agrees to supply the following product categories:
+      - Electronics accessories (cables, batteries, adaptors)
+      - Small domestic appliances
+      - Seasonal goods (defined per Annex I, reviewed annually)
+
+1.2 This Contract supersedes all prior purchase orders and letters of intent
+    between the parties relating to the categories listed above.
+
+================================================================================
+ARTICLE 2 — ORDERING PROCESS
+================================================================================
+
+2.1 Purchase orders must be transmitted electronically via the SupplyPilot
+    procurement platform or by EDI 850. Email orders are not accepted.
+
+2.2 Pinnacle will confirm or reject each purchase order within 6 business hours.
+    Rejection must include the reason and an alternative proposal.
+
+2.3 Blanket orders for a fixed SKU list may be established quarterly. Blanket
+    order call-offs (releases) must be placed with a minimum 72-hour notice.
+
+================================================================================
+ARTICLE 3 — LEAD TIMES AND DELIVERY
+================================================================================
+
+3.1 Standard Lead Times:
+      Electronics accessories:  5 business days
+      Small domestic appliances: 7 business days
+      Seasonal goods:           10 business days (extended to 15 for peak season,
+                                  defined as 1 Oct – 31 Dec)
+
+3.2 Lead times are measured from purchase order confirmation, not transmission.
+
+3.3 Pinnacle ships DDP (Delivered Duty Paid, Incoterms 2020) to the Customer's
+    Hamburg distribution centre. All import duties and freight costs are borne
+    by Pinnacle.
+
+3.4 Pinnacle shall provide tracking information within 1 business day of dispatch.
+
+================================================================================
+ARTICLE 4 — VOLUME COMMITMENTS AND FORECASTS
+================================================================================
+
+4.1 The Customer commits to a minimum annual purchase volume of EUR 240,000
+    across all categories. If this minimum is not met by 31 December of the
+    contract year, the Customer shall pay a shortfall fee of 3% of the gap.
+
+4.2 The Customer provides a rolling 12-week demand forecast to Pinnacle every
+    Friday by 12:00 CET. Pinnacle is not obligated to reserve capacity beyond
+    the forecast quantities.
+
+4.3 Pinnacle may use forecast data solely for internal planning and must not
+    share it with competitors or third parties.
+
+================================================================================
+ARTICLE 5 — PRICING
+================================================================================
+
+5.1 Prices are as specified in Annex II (Price Schedule) and fixed for 12 months.
+
+5.2 After 12 months, Pinnacle may propose a price revision no more than once
+    per contract year. The revision request must be supported by documented
+    component cost evidence and submitted with 60 days' notice.
+
+5.3 Maximum annual price increase: the lesser of (a) 6% or (b) the Dutch CPI
+    change over the preceding 12 months, as published by Statistics Netherlands.
+
+5.4 Volume discounts apply as follows:
+      Annual spend EUR 240,000–400,000:    catalogue price
+      Annual spend EUR 400,001–600,000:    3% discount on catalogue price
+      Annual spend above EUR 600,000:       6% discount on catalogue price
+
+================================================================================
+ARTICLE 6 — WARRANTIES AND PRODUCT COMPLIANCE
+================================================================================
+
+6.1 All electronics products must carry CE marking and comply with applicable
+    EU directives (LVD, EMC, RoHS) at the time of delivery.
+
+6.2 Pinnacle warrants that all goods are free from defects in materials and
+    workmanship for 24 months from the date of delivery.
+
+6.3 Warranty claims must be submitted by the Customer within the warranty period
+    via the Pinnacle Partner Portal. Pinnacle will respond within 5 business
+    days with a resolution (repair, replacement, or credit).
+
+6.4 Pinnacle maintains product liability insurance of EUR 5,000,000 per claim.
+    Certificates of insurance are provided annually or upon request.
+
+================================================================================
+ARTICLE 7 — RETURNS AND DEFECTS
+================================================================================
+
+7.1 Dead-on-arrival (DOA) policy:
+      - DOA claims must be submitted within 30 days of delivery.
+      - Pinnacle issues a full credit or replacement for confirmed DOA units.
+      - DOA rate above 1% of any shipment triggers a mandatory quality review.
+
+7.2 In-warranty failures (post-30-days):
+      - Customer returns failed units to Pinnacle (Pinnacle arranges collection
+        for batches of 10+ units; smaller quantities sent by tracked post).
+      - Pinnacle repairs or replaces within 15 business days.
+
+7.3 End-of-life (EOL) stock buyback:
+      - Pinnacle will repurchase unsold EOL units at 40% of original invoice
+        price, provided the Customer gives 30 days' written notice.
+
+================================================================================
+ARTICLE 8 — PEAK SEASON PROVISIONS
+================================================================================
+
+8.1 Peak season is defined as 1 October through 31 December.
+
+8.2 Pinnacle shall confirm peak-season capacity allocation by 1 August each year.
+    The Customer must submit peak-season demand forecasts by 15 July.
+
+8.3 Lead times during peak season are extended as noted in Article 3.1.
+
+8.4 No price surcharges apply during peak season; volume discount tiers
+    (Article 5.4) continue to apply based on year-to-date spend.
+
+================================================================================
+ARTICLE 9 — DISPUTE RESOLUTION AND GOVERNING LAW
+================================================================================
+
+9.1 This Contract is governed by the laws of the Netherlands.
+
+9.2 Any dispute shall first be subject to 30 days of good-faith negotiation
+    between senior representatives of each party.
+
+9.3 Unresolved disputes are referred to arbitration under the Netherlands
+    Arbitration Institute (NAI) Rules, with the seat in Rotterdam.
+
+================================================================================
+ARTICLE 10 — TERM AND TERMINATION
+================================================================================
+
+10.1 This Contract is effective for 24 months from the Execution Date.
+
+10.2 It renews automatically for 12-month periods unless either party gives
+     90 days' written notice before the end of the current term.
+
+10.3 Either party may terminate immediately for insolvency, fraud, or material
+     breach not cured within 30 days of written notice.
+
+================================================================================
+ANNEX I — SEASONAL GOODS DEFINITION
+================================================================================
+
+Seasonal goods are defined annually by mutual agreement before 1 August.
+For the 2024 calendar year, seasonal goods include:
+  - Christmas lights and decorations (eligible October–December)
+  - Summer outdoor accessories (eligible April–August)
+  - School stationery kits (eligible July–September)
+
+================================================================================
+SIGNATURES
+================================================================================
+
+For Pinnacle Trade Group B.V.:  ___________________________  Date: ____________
+                                Chief Commercial Officer
+
+For SupplyPilot Operations:     ___________________________  Date: ____________
+                                Head of Procurement

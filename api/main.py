@@ -151,6 +151,7 @@ def health():
 # ---------------------------------------------------------------------------
 
 from api.routers.agent import agent_router, alerts_router  # noqa: E402
+from api.routers.documents import router as documents_router  # noqa: E402
 from api.routers.inventory import router as inventory_router  # noqa: E402
 from api.routers.orders import router as orders_router  # noqa: E402
 from api.routers.products import router as products_router  # noqa: E402
@@ -160,3 +161,5 @@ app.include_router(inventory_router)
 app.include_router(orders_router)
 app.include_router(agent_router)
 app.include_router(alerts_router)
+app.include_router(documents_router)
+

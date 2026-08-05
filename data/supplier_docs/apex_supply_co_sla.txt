@@ -1,0 +1,182 @@
+SERVICE LEVEL AGREEMENT
+Apex Supply Co. — SupplyPilot Operations
+Effective Date: 1 January 2024
+Agreement Reference: APEX-SLA-2024-001
+
+================================================================================
+PARTIES
+================================================================================
+
+This Service Level Agreement ("Agreement") is entered into between:
+
+Supplier:  Apex Supply Co., 14 Commerce Park Way, Chicago, IL 60601
+           ("Apex" or "Supplier")
+
+Customer:  SupplyPilot Operations GmbH, 9 Warehouse District, Hamburg, Germany
+           ("Customer")
+
+================================================================================
+1. SCOPE OF SERVICES
+================================================================================
+
+Apex Supply Co. agrees to supply the following product categories under the
+terms of this Agreement:
+
+  - Consumer packaged goods (CPG) — ambient storage
+  - Household and cleaning products
+  - Seasonal promotional inventory
+
+All orders placed through the SupplyPilot procurement platform are governed by
+this Agreement unless superseded by a separately executed purchase order with
+explicit written amendment.
+
+================================================================================
+2. LEAD TIME COMMITMENTS
+================================================================================
+
+2.1 Standard Orders
+    Orders placed Monday through Friday before 14:00 CET shall be dispatched
+    within two (2) business days.
+
+2.2 Expedited Orders
+    Expedited fulfilment (dispatch within 24 hours) is available for orders
+    above EUR 10,000 in value. The expedited surcharge is 8% of order value.
+
+2.3 Large-Volume Orders
+    Orders exceeding 5,000 units of a single SKU require a minimum five (5)
+    business day lead time for production scheduling.
+
+2.4 Force Majeure
+    Lead time commitments are suspended during declared force majeure events
+    (see Section 9). Apex will notify the Customer within 4 business hours
+    of any force majeure declaration.
+
+================================================================================
+3. FILL RATE AND SERVICE LEVEL TARGETS
+================================================================================
+
+3.1 Minimum Fill Rate
+    Apex commits to a minimum order fill rate of 95% measured on a rolling
+    30-day calendar basis. Fill rate is defined as:
+
+        Fill Rate = (Units Shipped / Units Ordered) × 100
+
+3.2 On-Time Delivery
+    A minimum of 92% of orders (by line-item count) shall arrive at the
+    Customer's designated warehouse within the committed lead time window.
+
+3.3 Measurement and Reporting
+    Apex shall provide a monthly service-level report by the 5th business day
+    of the following month. The report shall include fill rate, on-time
+    delivery rate, and any root-cause analysis for misses exceeding 2%.
+
+================================================================================
+4. SUBSTITUTIONS AND BACK-ORDERS
+================================================================================
+
+4.1 Apex may substitute an equivalent SKU (same category, ±5% unit cost) only
+    with prior written approval from the Customer's procurement contact.
+
+4.2 Back-order notifications must be communicated within 1 business day of
+    order receipt. Back-ordered lines must carry an estimated availability date.
+
+4.3 The Customer reserves the right to cancel any back-ordered line that
+    cannot be fulfilled within 10 business days of the original order date,
+    without penalty.
+
+================================================================================
+5. PRICING AND PAYMENT TERMS
+================================================================================
+
+5.1 Prices are fixed for the duration of the Agreement unless raw material
+    indices (as published by the EU HICP sub-index for industrial goods)
+    shift by more than 8% over any rolling 90-day window.
+
+5.2 Price revision requests must be submitted with supporting documentation
+    at least 30 calendar days before the requested effective date.
+
+5.3 Payment terms: net-30 from the date of a valid invoice. Early payment
+    discount of 1.5% is available for payment within 10 days.
+
+5.4 Invoices must reference the SupplyPilot purchase order number and include
+    batch/lot numbers for all perishable or serialised goods.
+
+================================================================================
+6. QUALITY STANDARDS
+================================================================================
+
+6.1 All goods must conform to the product specifications agreed in Schedule A
+    (attached separately).
+
+6.2 Apex shall maintain ISO 9001:2015 certification throughout the term of this
+    Agreement. Copies of current certification shall be provided upon request.
+
+6.3 Shelf-Life Minimum: perishable products must arrive with no less than 75%
+    of their stated shelf life remaining.
+
+6.4 Apex accepts returns for:
+    - Products that fail to meet specification (full credit, no restocking fee)
+    - Products damaged in transit attributable to Apex's carrier (full credit)
+    - Surplus stock above agreed maximum inventory days (50% credit, within
+      90 days of delivery, maximum 10% of invoice value per order)
+
+================================================================================
+7. PENALTIES AND REMEDIES
+================================================================================
+
+7.1 Fill Rate Miss: If the rolling 30-day fill rate falls below 90%, Apex
+    shall provide a credit of 2% of the affected invoice value per percentage
+    point below 90%, up to a maximum of 10%.
+
+7.2 Late Delivery: If on-time delivery falls below 85% in any calendar month,
+    the Customer may issue a performance improvement notice (PIN). If the next
+    month's on-time rate remains below 85%, the Customer may terminate this
+    Agreement with 30 days' notice, without penalty.
+
+7.3 Liability Cap: Apex's total aggregate liability under this Agreement shall
+    not exceed the total invoice value paid by the Customer in the preceding
+    12-month period.
+
+================================================================================
+8. FORECASTING AND DEMAND SHARING
+================================================================================
+
+8.1 The Customer shall share a rolling 13-week demand forecast via the
+    SupplyPilot API no later than every Monday by 09:00 CET.
+
+8.2 Apex shall use the forecast for production planning only and shall not
+    disclose forecast data to third parties.
+
+8.3 Significant forecast deviations (>30% from prior week) shall be flagged
+    by the Customer with a written explanation within 24 hours.
+
+================================================================================
+9. FORCE MAJEURE
+================================================================================
+
+Neither party shall be liable for failure to perform obligations under this
+Agreement if such failure results from: natural disaster, pandemic, government
+embargo, port closure, or other events beyond the reasonable control of the
+affected party. The affected party must notify the other within 4 business
+hours and provide updates every 48 hours until resolution.
+
+================================================================================
+10. TERM AND TERMINATION
+================================================================================
+
+10.1 Initial term: 12 months from the Effective Date, auto-renewing for
+     successive 12-month periods unless either party gives 60 days' written
+     notice of non-renewal.
+
+10.2 Either party may terminate for material breach with 30 days' written
+     notice if the breach is not cured within the notice period.
+
+================================================================================
+SIGNATURES
+================================================================================
+
+For Apex Supply Co.:          ___________________________  Date: ____________
+                              Director of Commercial Affairs
+
+For SupplyPilot Operations:   ___________________________  Date: ____________
+                              Head of Procurement

@@ -464,6 +464,68 @@ def check_supplier_news_risk(supplier_name: str = "") -> str:
         })
 
 
+@tool
+def search_supplier_docs(
+    query: str,
+    supplier_name: str = "",
+    doc_type: str = "",
+) -> str:
+    """
+    Search supplier SLAs, contracts, and policy documents for specific clauses,
+    lead times, penalties, return rules, or contact information.
+
+    Parameters
+    ----------
+    query : str
+        The natural language search question or keyword phrase (e.g., 'fill rate penalty', 'lead time').
+    supplier_name : str
+        Optional supplier name to restrict search results to (e.g., 'Apex Supply Co').
+    doc_type : str
+        Optional document type filter: 'sla', 'contract', or 'policy'.
+
+    Returns a JSON object with status, query, and an array of cited document snippets ranked by relevance.
+    """
+    try:
+        from rag.search import search_documents
+
+        return search_documents(
+            query=query,
+            supplier_name=supplier_name if supplier_name.strip() else None,
+            doc_type=doc_type if doc_type.strip() else None,
+        )
+    except Exception as exc:
+        logger.exception("search_supplier_docs tool failed")
+        return json.dumps({"status": "error", "message": str(exc)})
+
+
+@tool
+def list_supplier_documents(
+    supplier_name: str = "",
+    doc_type: str = "",
+) -> str:
+    """
+    List all supplier documents (SLAs, contracts, policies) indexed in the system.
+
+    Parameters
+    ----------
+    supplier_name : str
+        Optional supplier name filter (e.g., 'Apex Supply Co').
+    doc_type : str
+        Optional document type filter: 'sla', 'contract', or 'policy'.
+
+    Returns a JSON summary of indexed supplier documents including file names, supplier names, and upload dates.
+    """
+    try:
+        from rag.search import list_documents
+
+        return list_documents(
+            supplier_name=supplier_name if supplier_name.strip() else None,
+            doc_type=doc_type if doc_type.strip() else None,
+        )
+    except Exception as exc:
+        logger.exception("list_supplier_documents tool failed")
+        return json.dumps({"status": "error", "message": str(exc)})
+
 
 # ---------------------------------------------------------------------------
 # Exported tool list
@@ -478,4 +540,7 @@ ALL_TOOLS = [
     get_recent_risk_alerts,
     check_weather_risk,
     check_supplier_news_risk,
+    search_supplier_docs,
+    list_supplier_documents,
 ]
+

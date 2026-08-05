@@ -144,3 +144,50 @@ def agent_history(limit: int = 20) -> dict:
 
 def list_alerts(limit: int = 20) -> dict:
     return _get("/alerts", params={"limit": limit})
+
+
+# ---------------------------------------------------------------------------
+# Documents / RAG (Phase 8)
+# ---------------------------------------------------------------------------
+
+def list_documents(supplier_name: str | None = None, doc_type: str | None = None) -> dict:
+    params: dict = {}
+    if supplier_name:
+        params["supplier_name"] = supplier_name
+    if doc_type:
+        params["doc_type"] = doc_type
+    return _get("/documents", params=params)
+
+
+def search_documents(
+    query: str,
+    top_k: int = 5,
+    supplier_name: str | None = None,
+    doc_type: str | None = None,
+) -> dict:
+    params: dict = {"q": query, "top_k": top_k}
+    if supplier_name:
+        params["supplier_name"] = supplier_name
+    if doc_type:
+        params["doc_type"] = doc_type
+    return _get("/documents/search", params=params)
+
+
+def ingest_document(
+    file_name: str,
+    file_bytes: bytes,
+    supplier_name: str,
+    doc_type: str,
+) -> dict:
+    try:
+        files = {"file": (file_name, file_bytes, "application/octet-stream")}
+        data = {"supplier_name": supplier_name, "doc_type": doc_type}
+        r = requests.post(f"{_BASE_URL}/documents/ingest", files=files, data=data, timeout=_TIMEOUT)
+        r.raise_for_status()
+        return r.json()
+    except requests.exceptions.ConnectionError:
+        raise APIError("Cannot reach the API server. Is it running on port 8000?")
+    except requests.exceptions.HTTPError as exc:
+        detail = exc.response.json().get("detail", str(exc))
+        raise APIError(detail, status_code=exc.response.status_code)
+

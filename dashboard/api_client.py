@@ -19,8 +19,12 @@ load_dotenv()
 
 _BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 if not _BASE_URL.startswith("http://") and not _BASE_URL.startswith("https://"):
-    _BASE_URL = f"http://{_BASE_URL}"
+    if "supplypilot" in _BASE_URL or "onrender" in _BASE_URL or os.getenv("RENDER"):
+        _BASE_URL = f"https://{_BASE_URL}.onrender.com"
+    else:
+        _BASE_URL = f"http://{_BASE_URL}"
 _TIMEOUT = 120  # seconds — agent calls can be slow
+
 
 
 

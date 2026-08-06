@@ -27,7 +27,8 @@ services:
     region: oregon
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --theme.base dark
+    startCommand: streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false --theme.base dark
+
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9

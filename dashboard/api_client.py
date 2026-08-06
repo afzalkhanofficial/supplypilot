@@ -18,7 +18,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+if not _BASE_URL.startswith("http://") and not _BASE_URL.startswith("https://"):
+    _BASE_URL = f"http://{_BASE_URL}"
 _TIMEOUT = 120  # seconds — agent calls can be slow
+
 
 
 class APIError(Exception):

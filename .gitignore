@@ -6,6 +6,11 @@
 .env
 PROJECT_AUDIT.md
 
+# Local sample test files — never commit
+sample_test_supplier_sla.txt
+sample_*
+
+
 
 # Raw data files — too large for git and contain no code
 data/raw/*.csv

@@ -13,9 +13,11 @@ let chatHistoryList = [];
 // ---------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     checkHealth();
+    setInterval(checkHealth, 10000); // Polling every 10 seconds for real-time live status
     loadOverviewData();
     populateProductDropdowns();
 });
+
 
 // ---------------------------------------------------------------------------
 // Navigation Router

@@ -116,18 +116,27 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+if WEB_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
+
 # ---------------------------------------------------------------------------
 # Root & Health check
 # ---------------------------------------------------------------------------
 
 @app.get(
     "/",
-    tags=["Health"],
-    summary="API root welcome endpoint",
-    response_model=dict,
+    summary="SupplyPilot Web Application",
 )
 def root():
-    """Root endpoint returning API status and docs link."""
+    """Serves the Single-Page Web Application index.html."""
+    index_file = WEB_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
     return {
         "name": "SupplyPilot API",
         "status": "online",
@@ -135,6 +144,7 @@ def root():
         "docs": "/docs",
         "health": "/health",
     }
+
 
 
 @app.get(

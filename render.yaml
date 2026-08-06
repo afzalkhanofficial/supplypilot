@@ -1,10 +1,10 @@
 # SupplyPilot Render Deployment Infrastructure as Code (IaC)
-# See https://render.com/docs/yaml-spec for format details.
+# Single Unified Web Service serving both API backend and web UI.
+# See https://render.com/docs/yaml-spec for details.
 
 services:
-  # Web service 1: FastAPI Backend
   - type: web
-    name: supplypilot-api
+    name: supplypilot-app
     env: python
     region: oregon
     plan: free
@@ -17,24 +17,7 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
       - key: CORS_ORIGINS
         value: "*"
-
-  # Web service 2: Streamlit Dashboard
-  - type: web
-    name: supplypilot-dashboard
-    env: python
-    region: oregon
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python scripts/run_dashboard.py
-
-
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: API_BASE_URL
-        fromService:
-          type: web
-          name: supplypilot-api
-          property: host

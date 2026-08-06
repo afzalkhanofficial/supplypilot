@@ -547,7 +547,7 @@ elif page == "📈  Demand Forecast":
         fig.add_trace(go.Scatter(
             x=dates + dates[::-1],
             y=yhat_upper + yhat_lower[::-1],
-            fill="todense",
+            fill="toself",
             fillcolor="rgba(56, 189, 248, 0.12)",
             line=dict(color="rgba(255,255,255,0)"),
             hoverinfo="skip",

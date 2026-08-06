@@ -7,6 +7,8 @@
 let currentRiskChart = null;
 let currentForecastChart = null;
 let chatHistoryList = [];
+const appCache = {};
+
 
 // ---------------------------------------------------------------------------
 // Initialization
@@ -93,32 +95,41 @@ async function checkHealth() {
 
 // Helper: Populate Product Dropdowns
 async function populateProductDropdowns() {
+    if (appCache.products) {
+        renderProductDropdowns(appCache.products);
+    }
     try {
         const res = await fetch('/products');
         const data = await res.json();
         const products = data.products || [];
-
-        const invSelect = document.getElementById('inv-product-select');
-        const fcSelect = document.getElementById('fc-product-select');
-        const poSelect = document.getElementById('po-product-select');
-
-        const optionsHtml = products.map(p => 
-            `<option value="${p.product_id}">Product ${p.product_id} — ${p.product_name}</option>`
-        ).join('');
-
-        if (invSelect) invSelect.innerHTML = optionsHtml;
-        if (fcSelect) fcSelect.innerHTML = optionsHtml;
-        if (poSelect) poSelect.innerHTML = optionsHtml;
-
+        appCache.products = products;
+        renderProductDropdowns(products);
     } catch (err) {
         console.error('Failed to load products dropdown:', err);
     }
+}
+
+function renderProductDropdowns(products) {
+    const invSelect = document.getElementById('inv-product-select');
+    const fcSelect = document.getElementById('fc-product-select');
+    const poSelect = document.getElementById('po-product-select');
+
+    const optionsHtml = products.map(p => 
+        `<option value="${p.product_id}">Product ${p.product_id} — ${p.product_name}</option>`
+    ).join('');
+
+    if (invSelect && !invSelect.children.length) invSelect.innerHTML = optionsHtml;
+    if (fcSelect && !fcSelect.children.length) fcSelect.innerHTML = optionsHtml;
+    if (poSelect && !poSelect.children.length) poSelect.innerHTML = optionsHtml;
 }
 
 // ---------------------------------------------------------------------------
 // PAGE 1 — FLEET OVERVIEW
 // ---------------------------------------------------------------------------
 async function loadOverviewData() {
+    if (appCache.overview) {
+        renderOverviewUI(appCache.overview.scanData, appCache.overview.ordersData);
+    }
     try {
         const [scanRes, ordersRes] = await Promise.all([
             fetch('/inventory/scan'),
@@ -128,43 +139,47 @@ async function loadOverviewData() {
         const scanData = await scanRes.json();
         const ordersData = await ordersRes.json();
 
-        // Update KPI Stats
-        document.getElementById('ov-total-products').innerText = scanData.scanned || 0;
-        document.getElementById('ov-critical-count').innerText = scanData.counts.CRITICAL || 0;
-        document.getElementById('ov-warning-count').innerText = scanData.counts.WARNING || 0;
-        document.getElementById('ov-pending-orders').innerText = ordersData.total || 0;
-
-        // Render Bar Chart
-        renderRiskDistributionChart(scanData.counts);
-
-        // Render Product Matrix Table
-        const tbody = document.getElementById('ov-risk-table-body');
-        const items = scanData.summary || [];
-
-        if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-500">No product inventory data found.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = items.map(item => {
-            const badgeClass = item.risk_level === 'CRITICAL' ? 'bg-brand-rose/10 text-brand-rose border-brand-rose/30' :
-                               item.risk_level === 'WARNING'  ? 'bg-brand-amber/10 text-brand-amber border-brand-amber/30' : 
-                                                                'bg-brand-emerald/10 text-brand-emerald border-brand-emerald/30';
-            return `
-                <tr class="hover:bg-surface-card/60 transition-colors">
-                    <td class="py-3.5 px-6 font-semibold text-white">Product ${item.product_id}</td>
-                    <td class="py-3.5 px-6"><span class="px-2.5 py-1 text-[10px] font-mono uppercase font-bold rounded-full border ${badgeClass}">${item.risk_level}</span></td>
-                    <td class="py-3.5 px-6 font-mono">${Number(item.current_stock).toLocaleString()}</td>
-                    <td class="py-3.5 px-6 font-mono text-gray-400">${Number(item.reorder_point).toLocaleString()}</td>
-                    <td class="py-3.5 px-6 font-mono text-gray-400">${Number(item.eoq).toLocaleString()}</td>
-                    <td class="py-3.5 px-6 font-mono font-bold ${item.days_of_cover < 7 ? 'text-brand-rose' : 'text-brand-cyan'}">${Number(item.days_of_cover).toFixed(1)}d</td>
-                </tr>
-            `;
-        }).join('');
-
+        appCache.overview = { scanData, ordersData };
+        renderOverviewUI(scanData, ordersData);
     } catch (err) {
         console.error('Error loading Overview page data:', err);
     }
+}
+
+function renderOverviewUI(scanData, ordersData) {
+    // Update KPI Stats
+    document.getElementById('ov-total-products').innerText = scanData.scanned || 0;
+    document.getElementById('ov-critical-count').innerText = scanData.counts.CRITICAL || 0;
+    document.getElementById('ov-warning-count').innerText = scanData.counts.WARNING || 0;
+    document.getElementById('ov-pending-orders').innerText = ordersData.total || 0;
+
+    // Render Bar Chart
+    renderRiskDistributionChart(scanData.counts);
+
+    // Render Product Matrix Table
+    const tbody = document.getElementById('ov-risk-table-body');
+    const items = scanData.summary || [];
+
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-500">No product inventory data found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+        const badgeClass = item.risk_level === 'CRITICAL' ? 'bg-brand-rose/10 text-brand-rose border-brand-rose/30' :
+                           item.risk_level === 'WARNING'  ? 'bg-brand-amber/10 text-brand-amber border-brand-amber/30' : 
+                                                            'bg-brand-emerald/10 text-brand-emerald border-brand-emerald/30';
+        return `
+            <tr class="hover:bg-surface-card/60 transition-colors">
+                <td class="py-3.5 px-6 font-semibold text-white">Product ${item.product_id}</td>
+                <td class="py-3.5 px-6"><span class="px-2.5 py-1 text-[10px] font-mono uppercase font-bold rounded-full border ${badgeClass}">${item.risk_level}</span></td>
+                <td class="py-3.5 px-6 font-mono">${Number(item.current_stock).toLocaleString()}</td>
+                <td class="py-3.5 px-6 font-mono text-gray-400">${Number(item.reorder_point).toLocaleString()}</td>
+                <td class="py-3.5 px-6 font-mono text-gray-400">${Number(item.eoq).toLocaleString()}</td>
+                <td class="py-3.5 px-6 font-mono font-bold ${item.days_of_cover < 7 ? 'text-brand-rose' : 'text-brand-cyan'}">${Number(item.days_of_cover).toFixed(1)}d</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function renderRiskDistributionChart(counts) {
@@ -210,43 +225,50 @@ async function loadInventoryDetails() {
     if (!select || !select.value) return;
 
     const pid = select.value;
+    const cacheKey = `inv_${pid}`;
+    if (appCache[cacheKey]) {
+        renderInventoryUI(appCache[cacheKey]);
+    }
     try {
         const res = await fetch(`/inventory/${pid}`);
         const inv = await res.json();
-
-        const colorClass = inv.risk_level === 'CRITICAL' ? 'text-brand-rose' :
-                           inv.risk_level === 'WARNING'  ? 'text-brand-amber' : 'text-brand-emerald';
-
-        document.getElementById('inv-current-stock').innerText = Number(inv.current_stock).toLocaleString();
-        document.getElementById('inv-current-stock').className = `text-3xl font-bold font-mono mt-1 ${colorClass}`;
-
-        document.getElementById('inv-days-cover').innerText = `${Number(inv.days_of_cover).toFixed(1)}d`;
-        document.getElementById('inv-days-cover').className = `text-3xl font-bold font-mono mt-1 ${colorClass}`;
-        document.getElementById('inv-risk-sub').innerText = `risk level: ${inv.risk_level}`;
-
-        document.getElementById('inv-reorder-point').innerText = Number(inv.reorder_point).toLocaleString();
-        document.getElementById('inv-eoq').innerText = Number(inv.eoq).toLocaleString();
-        document.getElementById('inv-safety-stock').innerText = Number(inv.safety_stock).toLocaleString();
-        document.getElementById('inv-lead-time').innerText = `${inv.lead_time_days} days`;
-
-        // Action Recommendation Box
-        const recBox = document.getElementById('inv-recommendation-box');
-        const recTitle = document.getElementById('inv-rec-title');
-        const recText = document.getElementById('inv-rec-text');
-
-        const borderClass = inv.risk_level === 'CRITICAL' ? 'border-l-brand-rose' :
-                            inv.risk_level === 'WARNING'  ? 'border-l-brand-amber' : 'border-l-brand-emerald';
-        const titleClass  = inv.risk_level === 'CRITICAL' ? 'text-brand-rose' :
-                            inv.risk_level === 'WARNING'  ? 'text-brand-amber' : 'text-brand-emerald';
-
-        recBox.className = `bg-surface-dark border border-gray-800 p-6 rounded-xl border-l-4 ${borderClass}`;
-        recTitle.className = `font-bold text-lg mb-2 ${titleClass}`;
-        recTitle.innerText = `Recommendation: ${inv.action}`;
-        recText.innerHTML = `Current stock level is <b>${Number(inv.current_stock).toLocaleString()} units</b> against Reorder Point <b>${Number(inv.reorder_point).toLocaleString()} units</b>. Recommended order batch size (EOQ): <b>${Number(inv.eoq).toLocaleString()} units</b>.`;
-
+        appCache[cacheKey] = inv;
+        renderInventoryUI(inv);
     } catch (err) {
         console.error(`Failed to load inventory for product ${pid}:`, err);
     }
+}
+
+function renderInventoryUI(inv) {
+    const colorClass = inv.risk_level === 'CRITICAL' ? 'text-brand-rose' :
+                       inv.risk_level === 'WARNING'  ? 'text-brand-amber' : 'text-brand-emerald';
+
+    document.getElementById('inv-current-stock').innerText = Number(inv.current_stock).toLocaleString();
+    document.getElementById('inv-current-stock').className = `text-3xl font-bold font-mono mt-1 ${colorClass}`;
+
+    document.getElementById('inv-days-cover').innerText = `${Number(inv.days_of_cover).toFixed(1)}d`;
+    document.getElementById('inv-days-cover').className = `text-3xl font-bold font-mono mt-1 ${colorClass}`;
+    document.getElementById('inv-risk-sub').innerText = `risk level: ${inv.risk_level}`;
+
+    document.getElementById('inv-reorder-point').innerText = Number(inv.reorder_point).toLocaleString();
+    document.getElementById('inv-eoq').innerText = Number(inv.eoq).toLocaleString();
+    document.getElementById('inv-safety-stock').innerText = Number(inv.safety_stock).toLocaleString();
+    document.getElementById('inv-lead-time').innerText = `${inv.lead_time_days} days`;
+
+    // Action Recommendation Box
+    const recBox = document.getElementById('inv-recommendation-box');
+    const recTitle = document.getElementById('inv-rec-title');
+    const recText = document.getElementById('inv-rec-text');
+
+    const borderClass = inv.risk_level === 'CRITICAL' ? 'border-l-brand-rose' :
+                        inv.risk_level === 'WARNING'  ? 'border-l-brand-amber' : 'border-l-brand-emerald';
+    const titleClass  = inv.risk_level === 'CRITICAL' ? 'text-brand-rose' :
+                        inv.risk_level === 'WARNING'  ? 'text-brand-amber' : 'text-brand-emerald';
+
+    recBox.className = `bg-surface-dark border border-gray-800 p-6 rounded-xl border-l-4 ${borderClass}`;
+    recTitle.className = `font-bold text-lg mb-2 ${titleClass}`;
+    recTitle.innerText = `Recommendation: ${inv.action}`;
+    recText.innerHTML = `Current stock level is <b>${Number(inv.current_stock).toLocaleString()} units</b> against Reorder Point <b>${Number(inv.reorder_point).toLocaleString()} units</b>. Recommended order batch size (EOQ): <b>${Number(inv.eoq).toLocaleString()} units</b>.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -259,31 +281,39 @@ async function loadDemandForecast() {
 
     const pid = select.value;
     const days = slider ? slider.value : 30;
+    const cacheKey = `fc_${pid}_${days}`;
 
+    if (appCache[cacheKey]) {
+        renderForecastUI(appCache[cacheKey], days);
+    }
     try {
         const res = await fetch(`/products/${pid}/forecast?days_ahead=${days}`);
         const fc = await res.json();
-
-        const dates = fc.dates || [];
-        const yhat = fc.yhat || [];
-        const yhatLower = fc.yhat_lower || [];
-        const yhatUpper = fc.yhat_upper || [];
-
-        const totalDemand = fc.total_forecast || 0;
-        const dailyAvg = totalDemand / Math.max(dates.length, 1);
-
-        document.getElementById('fc-total-demand').innerText = Math.round(totalDemand).toLocaleString();
-        document.getElementById('fc-horizon-sub').innerText = `over next ${days} days`;
-        document.getElementById('fc-daily-avg').innerText = Math.round(dailyAvg).toLocaleString();
-        document.getElementById('fc-cutoff').innerText = fc.training_end || 'N/A';
-
-        // Render Chart.js Forecast Line & Confidence Interval Shading
-        renderForecastChart(dates, yhat, yhatLower, yhatUpper);
-
+        appCache[cacheKey] = fc;
+        renderForecastUI(fc, days);
     } catch (err) {
         console.error(`Failed to load forecast for product ${pid}:`, err);
     }
 }
+
+function renderForecastUI(fc, days) {
+    const dates = fc.dates || [];
+    const yhat = fc.yhat || [];
+    const yhatLower = fc.yhat_lower || [];
+    const yhatUpper = fc.yhat_upper || [];
+
+    const totalDemand = fc.total_forecast || 0;
+    const dailyAvg = totalDemand / Math.max(dates.length, 1);
+
+    document.getElementById('fc-total-demand').innerText = Math.round(totalDemand).toLocaleString();
+    document.getElementById('fc-horizon-sub').innerText = `over next ${days} days`;
+    document.getElementById('fc-daily-avg').innerText = Math.round(dailyAvg).toLocaleString();
+    document.getElementById('fc-cutoff').innerText = fc.training_end || 'N/A';
+
+    // Render Chart.js Forecast Line & Confidence Interval Shading
+    renderForecastChart(dates, yhat, yhatLower, yhatUpper);
+}
+
 
 function renderForecastChart(dates, yhat, yhatLower, yhatUpper) {
     const ctx = document.getElementById('chart-forecast').getContext('2d');

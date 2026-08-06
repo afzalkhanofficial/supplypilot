@@ -34,53 +34,102 @@ router = APIRouter(prefix="/inventory", tags=["Inventory"])
 def scan_all():
     """
     Evaluate every product and return a risk-ranked summary.
-
-    Products are ordered CRITICAL → WARNING → OK, then by days_of_cover
-    ascending within each group.  This is the primary endpoint for the
-    dashboard's overview table.
+    Optimized bulk query for sub-50ms execution.
     """
-    from inventory.calculator import get_inventory_recommendation
     from database.db import engine
     from sqlalchemy import text
+    from inventory.calculator import (
+        calculate_safety_stock,
+        calculate_reorder_point,
+        calculate_eoq,
+        DEFAULT_ORDER_COST,
+        DEFAULT_HOLDING_COST_RATE,
+        _CRITICAL_DAYS_OF_COVER,
+        _WARNING_DAYS_OF_COVER,
+    )
 
     try:
         with engine.connect() as conn:
             rows = conn.execute(
-                text("SELECT product_id FROM products ORDER BY product_id")
+                text("""
+                    SELECT 
+                        i.product_id,
+                        i.current_stock,
+                        i.lead_time_days,
+                        i.unit_cost,
+                        i.supplier_name,
+                        COALESCE(s.avg_demand, 0.0) AS avg_demand,
+                        COALESCE(s.demand_std, 0.0) AS demand_std
+                    FROM inventory i
+                    LEFT JOIN (
+                        SELECT product_id, AVG(sales)::float AS avg_demand, STDDEV(sales)::float AS demand_std
+                        FROM sales_history
+                        GROUP BY product_id
+                    ) s ON i.product_id = s.product_id
+                    ORDER BY i.product_id;
+                """)
             ).fetchall()
-        product_ids = [r[0] for r in rows]
     except Exception as exc:
-        logger.exception("scan_all: failed to load product list")
+        logger.exception("scan_all: failed to execute bulk inventory query")
         raise HTTPException(status_code=500, detail=str(exc))
 
     results = []
     errors = []
 
-    for pid in product_ids:
+    for r in rows:
+        pid = int(r[0])
+        on_hand = float(r[1])
+        lead_time = int(r[2])
+        unit_cost = float(r[3])
+        supplier = str(r[4])
+        avg_demand = float(r[5])
+        demand_std = float(r[6])
+
         try:
-            rec = get_inventory_recommendation(pid)
+            ss = calculate_safety_stock(demand_std, lead_time, 0.95)
+            rop = calculate_reorder_point(avg_demand, lead_time, demand_std, 0.95)
+            eoq = calculate_eoq(avg_demand * 365, DEFAULT_ORDER_COST, unit_cost, DEFAULT_HOLDING_COST_RATE)
+
+            days_of_cover = (on_hand / avg_demand) if avg_demand > 0 else float("inf")
+
+            if days_of_cover < _CRITICAL_DAYS_OF_COVER or on_hand <= 0:
+                risk_level = "CRITICAL"
+                action = (
+                    f"Immediate replenishment required. Place an emergency order of {eoq} units now. "
+                    f"Current stock ({on_hand:.1f} units) covers only {days_of_cover:.1f} day(s) of demand."
+                )
+            elif on_hand <= rop or days_of_cover < _WARNING_DAYS_OF_COVER:
+                risk_level = "WARNING"
+                action = (
+                    f"Stock is below the reorder point ({rop} units). Place an order of {eoq} units with supplier {supplier}. "
+                    f"Current stock ({on_hand:.1f} units) covers {days_of_cover:.1f} day(s) of demand."
+                )
+            else:
+                risk_level = "OK"
+                action = f"Stock is healthy ({on_hand:.1f} units, {days_of_cover:.1f} days of cover). Reorder when stock falls to {rop} units."
+
             results.append(
                 InventoryScanItem(
                     product_id=pid,
-                    current_stock=rec["current_stock"],
-                    days_of_cover=rec["days_of_cover"],
-                    reorder_point=rec["reorder_point"],
-                    eoq=rec["eoq"],
-                    risk_level=rec["risk_level"],
-                    action=rec["action"],
+                    current_stock=on_hand,
+                    days_of_cover=days_of_cover,
+                    reorder_point=rop,
+                    eoq=eoq,
+                    risk_level=risk_level,
+                    action=action,
                 )
             )
         except Exception:
-            logger.warning("scan_all: product %d failed", pid)
+            logger.warning("scan_all: processing product %d failed", pid)
             errors.append(pid)
 
     _order = {"CRITICAL": 0, "WARNING": 1, "OK": 2}
-    results.sort(key=lambda r: (_order.get(r.risk_level, 9), r.days_of_cover))
+    results.sort(key=lambda item: (_order.get(item.risk_level, 9), item.days_of_cover))
 
     counts = InventoryScanCounts(
-        CRITICAL=sum(1 for r in results if r.risk_level == "CRITICAL"),
-        WARNING=sum(1 for r in results if r.risk_level == "WARNING"),
-        OK=sum(1 for r in results if r.risk_level == "OK"),
+        CRITICAL=sum(1 for item in results if item.risk_level == "CRITICAL"),
+        WARNING=sum(1 for item in results if item.risk_level == "WARNING"),
+        OK=sum(1 for item in results if item.risk_level == "OK"),
     )
 
     return InventoryScanResponse(
@@ -89,6 +138,7 @@ def scan_all():
         scanned=len(results),
         errors=errors,
     )
+
 
 
 @router.get(

@@ -40,75 +40,71 @@
     </script>
     <link rel="stylesheet" href="/static/style.css"/>
 </head>
-<body class="font-sans antialiased text-gray-200 bg-background-dark overflow-x-hidden selection:bg-brand-purple selection:text-white">
+<body class="font-sans antialiased text-gray-200 bg-background-dark min-h-screen flex selection:bg-brand-purple selection:text-white">
 
-    <!-- ── Sticky Top Navigation Header ── -->
-    <nav class="border-b border-gray-800 sticky top-0 z-50 bg-background-dark/90 backdrop-blur-md h-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-            <div class="flex items-center space-x-3">
+    <!-- ── Fixed Left Sidebar Navigation ── -->
+    <aside class="w-64 bg-surface-dark border-r border-gray-800 flex flex-col justify-between p-5 shrink-0 fixed h-full z-40 overflow-y-auto">
+        <div class="space-y-6">
+            <!-- Brand Logo Header -->
+            <div class="flex items-center space-x-3 pb-2 border-b border-gray-800/80">
                 <div class="w-9 h-9 bg-gradient-to-tr from-brand-purple via-indigo-600 to-brand-blue rounded-lg flex items-center justify-center shadow-lg shadow-brand-purple/20">
                     <i class="fa-solid fa-boxes-stacked text-white text-lg"></i>
                 </div>
-                <div>
-                    <span class="font-bold text-xl tracking-tight text-white">SupplyPilot</span>
-                </div>
+                <span class="font-bold text-xl tracking-tight text-white">SupplyPilot</span>
             </div>
 
-            <!-- Live Status Badges -->
-            <div class="flex items-center space-x-4 text-xs font-mono">
-                <div class="flex items-center space-x-2 bg-surface-dark border border-gray-800 px-3 py-1.5 rounded-full">
-                    <span class="text-gray-400">API:</span>
+            <!-- Real-time Health Status Badges -->
+            <div class="space-y-2 text-xs font-mono bg-black/40 border border-gray-800/80 p-3 rounded-xl">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400">API Server:</span>
                     <span id="api-status-dot" class="flex items-center text-gray-400 font-semibold">
                         <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse mr-1.5"></span>Checking...
                     </span>
                 </div>
-                <div class="flex items-center space-x-2 bg-surface-dark border border-gray-800 px-3 py-1.5 rounded-full">
-                    <span class="text-gray-400">DB:</span>
+                <div class="flex items-center justify-between pt-1.5 border-t border-gray-800/60">
+                    <span class="text-gray-400">PostgreSQL DB:</span>
                     <span id="db-status-dot" class="flex items-center text-gray-400 font-semibold">
                         <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse mr-1.5"></span>Checking...
                     </span>
                 </div>
             </div>
+
+            <!-- Workspace Modules Navigation -->
+            <div class="space-y-2">
+                <div class="text-[11px] font-mono uppercase text-gray-500 tracking-wider px-2">Workspace Modules</div>
+                <nav class="space-y-1">
+                    <button onclick="navigateTo('overview')" class="nav-item active w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                        <i class="fa-solid fa-chart-pie text-brand-cyan text-base w-5"></i>
+                        <span>Fleet Overview</span>
+                    </button>
+                    <button onclick="navigateTo('inventory')" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                        <i class="fa-solid fa-box text-brand-amber text-base w-5"></i>
+                        <span>Inventory Status</span>
+                    </button>
+                    <button onclick="navigateTo('forecast')" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                        <i class="fa-solid fa-chart-line text-brand-purple text-base w-5"></i>
+                        <span>Demand Forecast</span>
+                    </button>
+                    <button onclick="navigateTo('orders')" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                        <i class="fa-solid fa-cart-shopping text-brand-blue text-base w-5"></i>
+                        <span>Purchase Orders</span>
+                    </button>
+                    <button onclick="navigateTo('chat')" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                        <i class="fa-solid fa-robot text-brand-cyan text-base w-5"></i>
+                        <span>Agent Chat</span>
+                    </button>
+                    <button onclick="navigateTo('rag')" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                        <i class="fa-solid fa-file-contract text-brand-emerald text-base w-5"></i>
+                        <span>Supplier Intelligence</span>
+                    </button>
+                </nav>
+            </div>
         </div>
-    </nav>
+    </aside>
 
-    <!-- ── Main Workspace Layout ── -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- Sidebar Router Nav -->
-        <aside class="lg:col-span-3 space-y-2">
-            <div class="text-xs font-mono uppercase text-gray-500 tracking-wider mb-3 px-3">Workspace Modules</div>
-            <nav class="space-y-1">
-                <button onclick="navigateTo('overview')" class="nav-item active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
-                    <i class="fa-solid fa-chart-pie text-brand-cyan text-base"></i>
-                    <span>Fleet Overview</span>
-                </button>
-                <button onclick="navigateTo('inventory')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
-                    <i class="fa-solid fa-box text-brand-amber text-base"></i>
-                    <span>Inventory Status</span>
-                </button>
-                <button onclick="navigateTo('forecast')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
-                    <i class="fa-solid fa-chart-line text-brand-purple text-base"></i>
-                    <span>Demand Forecast</span>
-                </button>
-                <button onclick="navigateTo('orders')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
-                    <i class="fa-solid fa-cart-shopping text-brand-blue text-base"></i>
-                    <span>Purchase Orders</span>
-                </button>
-                <button onclick="navigateTo('chat')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
-                    <i class="fa-solid fa-robot text-brand-cyan text-base"></i>
-                    <span>Agent Chat</span>
-                </button>
-                <button onclick="navigateTo('rag')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
-                    <i class="fa-solid fa-file-contract text-brand-emerald text-base"></i>
-                    <span>Supplier Intelligence</span>
-                </button>
-            </nav>
-        </aside>
+    <!-- ── Main Workspace Area ── -->
+    <main class="flex-1 ml-64 p-8 space-y-6 max-w-6xl">
 
-
-        <!-- Dynamic Content Workspace Container -->
-        <main class="lg:col-span-9 space-y-6">
 
             <!-- PAGE 1 — FLEET OVERVIEW -->
             <section id="page-overview" class="page-section active space-y-6">
@@ -498,9 +494,9 @@
             </section>
 
         </main>
-    </div>
 
     <!-- Application JavaScript -->
     <script src="/static/app.js"></script>
 </body>
 </html>
+

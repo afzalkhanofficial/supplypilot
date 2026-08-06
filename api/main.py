@@ -117,8 +117,25 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 
 # ---------------------------------------------------------------------------
-# Health check
+# Root & Health check
 # ---------------------------------------------------------------------------
+
+@app.get(
+    "/",
+    tags=["Health"],
+    summary="API root welcome endpoint",
+    response_model=dict,
+)
+def root():
+    """Root endpoint returning API status and docs link."""
+    return {
+        "name": "SupplyPilot API",
+        "status": "online",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
 
 @app.get(
     "/health",
@@ -144,6 +161,7 @@ def health():
         pass
 
     return {"status": "ok", "db_connected": db_ok, "version": "1.0.0"}
+
 
 
 # ---------------------------------------------------------------------------

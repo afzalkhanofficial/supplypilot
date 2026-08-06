@@ -48,25 +48,9 @@
             <!-- Brand Logo Header -->
             <div class="flex items-center space-x-3 pb-2 border-b border-gray-800/80">
                 <div class="w-9 h-9 bg-gradient-to-tr from-brand-purple via-indigo-600 to-brand-blue rounded-lg flex items-center justify-center shadow-lg shadow-brand-purple/20">
-                    <i class="fa-solid fa-boxes-stacked text-white text-lg"></i>
+                    <i class="fa-solid fa-rocket text-white text-lg"></i>
                 </div>
                 <span class="font-bold text-xl tracking-tight text-white">SupplyPilot</span>
-            </div>
-
-            <!-- Real-time Health Status Badges -->
-            <div class="space-y-2 text-xs font-mono bg-black/40 border border-gray-800/80 p-3 rounded-xl">
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-400">API Server:</span>
-                    <span id="api-status-dot" class="flex items-center text-gray-400 font-semibold">
-                        <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse mr-1.5"></span>Checking...
-                    </span>
-                </div>
-                <div class="flex items-center justify-between pt-1.5 border-t border-gray-800/60">
-                    <span class="text-gray-400">PostgreSQL DB:</span>
-                    <span id="db-status-dot" class="flex items-center text-gray-400 font-semibold">
-                        <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse mr-1.5"></span>Checking...
-                    </span>
-                </div>
             </div>
 
             <!-- Workspace Modules Navigation -->
@@ -97,11 +81,27 @@
                         <i class="fa-solid fa-file-contract text-brand-emerald text-base w-5"></i>
                         <span>Supplier Intelligence</span>
                     </button>
-
                 </nav>
             </div>
         </div>
+
+        <!-- Real-time Health Status Badges (At Bottom of Sidebar) -->
+        <div class="mt-8 mb-4 space-y-2 text-xs font-mono bg-black/40 border border-gray-800/80 p-3 rounded-xl">
+            <div class="flex items-center justify-between">
+                <span class="text-gray-400">API Server:</span>
+                <span id="api-status-dot" class="flex items-center text-gray-400 font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse mr-1.5"></span>Checking...
+                </span>
+            </div>
+            <div class="flex items-center justify-between pt-1.5 border-t border-gray-800/60">
+                <span class="text-gray-400">PostgreSQL DB:</span>
+                <span id="db-status-dot" class="flex items-center text-gray-400 font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse mr-1.5"></span>Checking...
+                </span>
+            </div>
+        </div>
     </aside>
+
 
     <!-- ── Main Workspace Area ── -->
     <main class="flex-1 ml-64 p-8 space-y-6 max-w-6xl">

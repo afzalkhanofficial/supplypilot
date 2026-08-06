@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkHealth, 10000); // Polling every 10 seconds for real-time live status
     loadOverviewData();
     populateProductDropdowns();
+    navigateTo('overview');
 });
+
 
 
 // ---------------------------------------------------------------------------

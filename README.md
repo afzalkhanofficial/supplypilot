@@ -2,7 +2,7 @@
 
 # 🚀 SupplyPilot — AI Supply Chain Optimization System
 
-An end-to-end supply chain decision-support platform combining **time-series demand forecasting** (Facebook Prophet), **deterministic inventory optimization** (EOQ, Safety Stock, Reorder Point), **supplier document intelligence** (RAG via `pgvector` and `sentence-transformers`), an **autonomous tool-calling AI agent** (LangChain + Groq `llama-3.3-70b-versatile`), a **FastAPI backend**, and a **Streamlit dashboard**.
+An end-to-end supply chain decision-support platform combining **time-series demand forecasting** (Facebook Prophet), **deterministic inventory optimization** (EOQ, Safety Stock, Reorder Point), **supplier document intelligence** (RAG via `pgvector` and `sentence-transformers`), an **autonomous tool-calling AI agent** (LangChain + Groq `llama-3.3-70b-versatile`), and a **Unified FastAPI Web Application**.
 
 </div>
 
@@ -10,7 +10,7 @@ An end-to-end supply chain decision-support platform combining **time-series dem
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.41-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![HTML5](https://img.shields.io/badge/HTML5-CSS3--JS-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-CPU--build-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-0.3-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
@@ -54,15 +54,15 @@ SupplyPilot was built to design and evaluate an end-to-end AI system that helps 
   - Character-window chunking (1,000 characters / 200 overlap) snapped to word boundaries.
   - Plain text and PDF text extraction (`pypdf`) with SHA-256 deduplication.
 - **Autonomous Tool-Calling Agent**: LangChain agent equipped with 10 custom tools (`list_products`, `get_demand_forecast`, `get_inventory_status`, `scan_all_inventory`, `create_purchase_order`, `get_recent_risk_alerts`, `check_weather_risk`, `check_supplier_news_risk`, `search_supplier_docs`, `list_supplier_documents`).
-- **Human-in-the-Loop Purchase Orders**: Orders created by the agent enter a `pending` state and require explicit human approval via the dashboard before updating live inventory stock.
-- **Interactive Streamlit Dashboard**: Dark glassmorphism interface across 6 dedicated pages: Overview, Inventory, Demand Forecast, Purchase Orders, Agent Chat, and Supplier Intelligence.
+- **Human-in-the-Loop Purchase Orders**: Orders created by the agent enter a `pending` state and require explicit human approval via the web interface before updating live inventory stock.
+- **Unified FastAPI Single-Page Web App**: High-performance dark glassmorphism interface across 6 dedicated pages: Overview, Inventory, Demand Forecast, Purchase Orders, Agent Chat, and Supplier Intelligence.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Backend Framework**: FastAPI (Uvicorn, Pydantic v2, CORS middleware)
-- **Dashboard**: Streamlit (Plotly interactive charts, custom dark CSS theme)
+- **Backend Framework**: FastAPI (Uvicorn, Pydantic v2, CORS middleware, StaticFiles hosting)
+- **Frontend**: Single-Page Web Application (HTML5, Vanilla CSS3 glassmorphism, ES6 JavaScript, Chart.js)
 - **Database & Vector Store**: Supabase PostgreSQL with `pgvector` extension (`psycopg2-binary`, SQLAlchemy 2.0 ORM)
 - **Time-Series Forecasting**: Facebook Prophet (`prophet==1.1.6`), `scikit-learn`
 - **Vector Embeddings & RAG**: `sentence-transformers` (`all-MiniLM-L6-v2`), PyTorch (CPU build), `pypdf`
@@ -75,14 +75,13 @@ SupplyPilot was built to design and evaluate an end-to-end AI system that helps 
 
 ```mermaid
 flowchart TD
-    User([User / Operations Manager]) <--> Dashboard[Streamlit Dashboard\n:8501]
-    Dashboard <--> API[FastAPI REST Backend\n:8000]
+    User([User / Operations Manager]) <--> WebApp[Unified FastAPI Web Application\n:8000 / Single Render Service]
 
-    subgraph Core Engines
-        API <--> Agent[LangChain Tool-Calling Agent\nGroq llama-3.3-70b-versatile]
-        API <--> Inv[Inventory Calculator\nEOQ / Safety Stock / ROP]
-        API <--> Forecaster[Prophet Predictor\n20 Trained Model Artifacts]
-        API <--> RAG[RAG Vector Search\nall-MiniLM-L6-v2 Embeddings]
+    subgraph Backend & Engines
+        WebApp <--> Agent[LangChain Tool-Calling Agent\nGroq llama-3.3-70b-versatile]
+        WebApp <--> Inv[Inventory Calculator\nEOQ / Safety Stock / ROP]
+        WebApp <--> Forecaster[Prophet Predictor\n20 Trained Model Artifacts]
+        WebApp <--> RAG[RAG Vector Search\nall-MiniLM-L6-v2 Embeddings]
     end
 
     Agent <--> Tools[10 Agent Tools]
@@ -91,7 +90,7 @@ flowchart TD
     Tools <--> RAG
     Tools <--> External[Weather & News RSS APIs]
     Tools <--> DB[(PostgreSQL + pgvector)]
-    API <--> DB
+    WebApp <--> DB
 ```
 
 ---
@@ -104,8 +103,8 @@ supplypilot/
 │   ├── agent.py            # Agent executor runner & DB interaction logger
 │   ├── prompts.py          # System prompt & ChatPromptTemplate
 │   └── tools.py            # 10 LangChain @tool wrappers
-├── api/                    # FastAPI REST API backend
-│   ├── main.py             # FastAPI app, CORS, lifespan probe & error handlers
+├── api/                    # FastAPI REST API backend & static server
+│   ├── main.py             # FastAPI app, static files mount, lifespan probe & error handlers
 │   ├── schemas.py          # Pydantic request/response models
 │   └── routers/            # API endpoint routers
 │       ├── agent.py        # /agent/chat, /agent/history, /alerts
@@ -113,9 +112,6 @@ supplypilot/
 │       ├── inventory.py    # /inventory/scan, /inventory/{id}
 │       ├── orders.py       # /orders (list, create, approve/reject)
 │       └── products.py     # /products, /products/{id}/forecast
-├── dashboard/              # Streamlit frontend dashboard
-│   ├── app.py              # 6-page Streamlit web app with custom dark CSS
-│   └── api_client.py       # Requests-based HTTP client for API backend
 ├── data/                   # Data directory
 │   └── supplier_docs/      # Sample SLAs, contracts, and policy text documents
 ├── database/               # PostgreSQL schema & SQLAlchemy ORM
@@ -139,8 +135,7 @@ supplypilot/
 │   └── search.py           # Cosine-similarity ANN search & document listing
 ├── scripts/                # Helper scripts & CLI runners
 │   ├── ingest_docs.py      # Bulk document ingestion CLI
-│   ├── run_api.py          # FastAPI launcher
-│   ├── run_dashboard.py    # Streamlit launcher
+│   ├── run_api.py          # FastAPI application launcher
 │   ├── seed_data.py        # Rossmann dataset seed script
 │   ├── test_agent.py       # Agent verification test
 │   └── test_inventory.py   # Inventory math verification script
@@ -151,8 +146,12 @@ supplypilot/
 │   ├── test_orders.py      # Purchase order API tests
 │   ├── test_products.py    # Product & forecast API tests
 │   └── test_rag.py         # Phase 8 RAG test suite
+├── web/                    # Native Single-Page Web Frontend
+│   ├── app.js              # Single-page router, fetch API client & Chart.js renderer
+│   ├── index.html          # 6-page responsive Single-Page Application layout
+│   └── style.css           # Glassmorphism dark design system
 ├── .env.example            # Environment variable template
-├── render.yaml             # Render.com infrastructure as code specification
+├── render.yaml             # Render.com single web service specification
 ├── Procfile                # Web process configuration
 └── requirements.txt        # Pinned Python dependencies
 ```
@@ -170,11 +169,6 @@ Prophet models were evaluated against a 1-day lag Naive Baseline across a 42-day
 | **Mean Absolute Percentage Error (MAPE)** | 21.4% | **7.9%** | **-63.2%** |
 
 *Evaluated on open-day sales data over the 42-day holdout set.*
-
-**Honest Limitations:**
-- **Store-to-Product Abstraction**: The Rossmann dataset contains store sales rather than SKU sales. Mapping store IDs as product IDs allows realistic time-series behavior (seasonality, promos, closures), but does not model multi-SKU cannibalization within a single store.
-- **Local Embedding Model Trade-offs**: `all-MiniLM-L6-v2` is compact (384 dimensions, ~90 MB) and fast on CPU, but has a shorter context window (512 tokens) compared to larger commercial embedding APIs.
-- **External Risk Feeds**: OpenWeatherMap and Google News RSS integrations rely on public endpoints. Network hiccups or missing API keys trigger graceful fallbacks (`status: UNAVAILABLE`) rather than fabricated risk scores.
 
 ---
 
@@ -227,16 +221,13 @@ python scripts/seed_data.py
 python scripts/ingest_docs.py data/supplier_docs/
 ```
 
-### 6. Start Applications
+### 6. Start Unified Application
 ```bash
-# Terminal 1 — Start Backend API (Port 8000)
+# Start Unified FastAPI Web Application (Port 8000)
 python scripts/run_api.py
-
-# Terminal 2 — Start Dashboard (Port 8501)
-python scripts/run_dashboard.py
 ```
 
-Access the Streamlit Dashboard at **http://localhost:8501** and Swagger docs at **http://localhost:8000/docs**.
+Access the Web Application UI at **http://localhost:8000** and Swagger API docs at **http://localhost:8000/docs**.
 
 ---
 
@@ -246,22 +237,6 @@ Access the Streamlit Dashboard at **http://localhost:8501** and Swagger docs at 
 # Run all 80 unit & integration tests
 pytest tests/ -v
 ```
-
-**Test Coverage Breakdown:**
-- `test_health.py`: 3 tests (API & DB connection probes)
-- `test_inventory.py`: 33 tests (EOQ, Safety Stock, ROP calculations, edge cases)
-- `test_orders.py`: 13 tests (Purchase order lifecycle & stock updates)
-- `test_products.py`: 17 tests (Product listings & Prophet forecast outputs)
-- `test_rag.py`: 14 tests (Chunking, embeddings, deduplication, vector search, agent tools, REST API)
-
----
-
-## 🚀 Next Steps / Future Improvements
-
-- **Multi-Echelon Inventory Optimization**: Extend inventory mathematics to handle central warehouse distribution to retail nodes.
-- **Hybrid Keyword + Vector Search**: Combine BM25 keyword ranking with `pgvector` cosine similarity (Reciprocal Rank Fusion) for improved domain-specific acronym search.
-- **Async Background Task Queue**: Offload heavy PDF embedding ingestion to Celery/Redis tasks for multi-page document batches.
-- **VLM Contract Scanning**: Incorporate Vision-Language Models to extract table structures directly from scanned contract images.
 
 ---
 

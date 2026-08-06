@@ -519,11 +519,15 @@ elif page == "📈  Demand Forecast":
             days_ahead = st.slider("Days ahead", min_value=7, max_value=90, value=30)
 
         fc = get_forecast(pid, days_ahead=days_ahead)
-        points = fc["forecast"]
 
-        total_demand = fc["summary"]["total_forecasted_demand"]
-        daily_avg = fc["summary"]["daily_average"]
-        cutoff = fc["summary"]["last_historical_date"]
+        dates = fc["dates"]
+        yhat = fc["yhat"]
+        yhat_lower = fc["yhat_lower"]
+        yhat_upper = fc["yhat_upper"]
+
+        total_demand = fc["total_forecast"]
+        daily_avg = total_demand / max(len(dates), 1)
+        cutoff = fc["training_end"]
 
         st.markdown("<br/>", unsafe_allow_html=True)
         c1, c2, c3 = st.columns(3)
@@ -536,10 +540,6 @@ elif page == "📈  Demand Forecast":
         # Plotly chart
         st.markdown(f'<div class="section-header">Forecast Chart — Product {pid}</div>', unsafe_allow_html=True)
 
-        dates = [p["ds"] for p in points]
-        yhat = [p["yhat"] for p in points]
-        yhat_lower = [p["yhat_lower"] for p in points]
-        yhat_upper = [p["yhat_upper"] for p in points]
 
         fig = go.Figure()
 

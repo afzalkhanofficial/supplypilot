@@ -240,9 +240,10 @@ async function loadInventoryDetails() {
                             inv.risk_level === 'WARNING'  ? 'text-brand-amber' : 'text-brand-emerald';
 
         recBox.className = `bg-surface-dark border border-gray-800 p-6 rounded-xl border-l-4 ${borderClass}`;
-        recTitle.className = `font-bold text-lg mb-2 ${titleClass}`;
-        recTitle.innerText = `Recommendation: ${inv.action}`;
+        recTitle.className = `font-bold text-lg mb-2`;
+        recTitle.innerHTML = `<span class="text-white">Recommendation:</span> <span class="${titleClass}">${inv.action}</span>`;
         recText.innerHTML = `Current stock level is <b>${Number(inv.current_stock).toLocaleString()} units</b> against Reorder Point <b>${Number(inv.reorder_point).toLocaleString()} units</b>. Recommended order batch size (EOQ): <b>${Number(inv.eoq).toLocaleString()} units</b>.`;
+
 
     } catch (err) {
         console.error(`Failed to load inventory for product ${pid}:`, err);

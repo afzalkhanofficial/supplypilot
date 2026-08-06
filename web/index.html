@@ -1,401 +1,508 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SupplyPilot — Supply Chain AI Platform</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <!-- Chart.js for time-series forecast and risk distribution charts -->
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SupplyPilot — Autonomous Supply Chain Intelligence Platform</title>
+    <!-- Tailwind CSS with Forms & Typography Plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <!-- FontAwesome 6 & Material Symbols -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Chart.js for interactive time-series demand forecast line chart & risk bar chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background-dark": "#0D0D0F",
+                        "surface-dark": "#161b22",
+                        "surface-card": "#1c2128",
+                        "brand-purple": "#8C4FFF",
+                        "brand-blue": "#4D9CFF",
+                        "brand-cyan": "#38bdf8",
+                        "brand-emerald": "#10B981",
+                        "brand-amber": "#F59E0B",
+                        "brand-rose": "#EF4444",
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="stylesheet" href="/static/style.css"/>
 </head>
-<body>
-    <div class="app-container">
-        <!-- ── Sidebar Navigation ── -->
-        <aside class="sidebar">
-            <div class="brand-header">
-                <div class="brand-icon">🚀</div>
+<body class="font-sans antialiased text-gray-200 bg-background-dark overflow-x-hidden selection:bg-brand-purple selection:text-white">
+
+    <!-- ── Sticky Top Navigation Header ── -->
+    <nav class="border-b border-gray-800 sticky top-0 z-50 bg-background-dark/90 backdrop-blur-md h-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-gradient-to-tr from-brand-purple via-indigo-600 to-brand-blue rounded-lg flex items-center justify-center shadow-lg shadow-brand-purple/20">
+                    <i class="fa-solid fa-boxes-stacked text-white text-lg"></i>
+                </div>
                 <div>
-                    <div class="brand-title">SupplyPilot</div>
-                    <div class="brand-tag">SUPPLY CHAIN AI</div>
+                    <span class="font-bold text-xl tracking-tight text-white">SupplyPilot</span>
+                    <span class="ml-2 text-[10px] font-mono uppercase tracking-widest text-brand-purple bg-brand-purple/10 px-2 py-0.5 rounded border border-brand-purple/20">ENTERPRISE AI</span>
                 </div>
             </div>
 
-            <ul class="nav-list">
-                <li class="nav-item active" onclick="navigateTo('overview')">📊 Overview</li>
-                <li class="nav-item" onclick="navigateTo('inventory')">📦 Inventory</li>
-                <li class="nav-item" onclick="navigateTo('forecast')">📈 Demand Forecast</li>
-                <li class="nav-item" onclick="navigateTo('orders')">🛒 Purchase Orders</li>
-                <li class="nav-item" onclick="navigateTo('chat')">🤖 Agent Chat</li>
-                <li class="nav-item" onclick="navigateTo('rag')">📄 Supplier Intelligence</li>
-            </ul>
-
-            <div class="sidebar-status">
-                <div class="status-row">
-                    <span>API Server</span>
-                    <span id="api-status-dot" class="dot-online">● Online</span>
+            <!-- Live Status Badges -->
+            <div class="flex items-center space-x-4 text-xs font-mono">
+                <div class="flex items-center space-x-2 bg-surface-dark border border-gray-800 px-3 py-1.5 rounded-full">
+                    <span class="text-gray-400">API:</span>
+                    <span id="api-status-dot" class="flex items-center text-brand-emerald font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-brand-emerald animate-pulse mr-1.5"></span>Online
+                    </span>
                 </div>
-                <div class="status-row">
-                    <span>PostgreSQL DB</span>
-                    <span id="db-status-dot" class="dot-online">● Connected</span>
+                <div class="flex items-center space-x-2 bg-surface-dark border border-gray-800 px-3 py-1.5 rounded-full">
+                    <span class="text-gray-400">DB:</span>
+                    <span id="db-status-dot" class="flex items-center text-brand-emerald font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-brand-emerald animate-pulse mr-1.5"></span>Connected
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Main Workspace Layout ── -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Sidebar Router Nav -->
+        <aside class="lg:col-span-3 space-y-2">
+            <div class="text-xs font-mono uppercase text-gray-500 tracking-wider mb-3 px-3">Workspace Modules</div>
+            <nav class="space-y-1">
+                <button onclick="navigateTo('overview')" class="nav-item active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                    <i class="fa-solid fa-chart-pie text-brand-cyan text-base"></i>
+                    <span>Fleet Overview</span>
+                </button>
+                <button onclick="navigateTo('inventory')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                    <i class="fa-solid fa-box text-brand-amber text-base"></i>
+                    <span>Inventory Status</span>
+                </button>
+                <button onclick="navigateTo('forecast')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                    <i class="fa-solid fa-chart-line text-brand-purple text-base"></i>
+                    <span>Demand Forecast</span>
+                </button>
+                <button onclick="navigateTo('orders')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                    <i class="fa-solid fa-cart-shopping text-brand-blue text-base"></i>
+                    <span>Purchase Orders</span>
+                </button>
+                <button onclick="navigateTo('chat')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                    <i class="fa-solid fa-robot text-brand-cyan text-base"></i>
+                    <span>Agent Chat</span>
+                </button>
+                <button onclick="navigateTo('rag')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 border text-left">
+                    <i class="fa-solid fa-file-contract text-brand-emerald text-base"></i>
+                    <span>Supplier Intelligence</span>
+                </button>
+            </nav>
+
+            <div class="mt-8 p-4 bg-surface-dark border border-gray-800 rounded-xl space-y-2">
+                <div class="text-xs font-semibold text-gray-300">Engine Stack</div>
+                <div class="text-[11px] font-mono text-gray-500 space-y-1">
+                    <div>• Prophet Demand Engine</div>
+                    <div>• Deterministic EOQ & Safety Stock</div>
+                    <div>• pgvector Similarity Engine</div>
+                    <div>• Groq Llama-3.3-70b Agent</div>
                 </div>
             </div>
         </aside>
 
-        <!-- ── Main Content Area ── -->
-        <main class="main-content">
-            
-            <!-- PAGE 1 — OVERVIEW -->
-            <section id="page-overview" class="page-section active">
-                <h1 class="page-title">Fleet Overview</h1>
-                <p class="page-sub">Real-time inventory health and risk distribution across all products</p>
+        <!-- Dynamic Content Workspace Container -->
+        <main class="lg:col-span-9 space-y-6">
 
-                <div class="kpi-grid">
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">Total Products</div>
-                        <div class="kpi-value cyan" id="ov-total-products">—</div>
-                        <div class="kpi-sub">tracked in system</div>
+            <!-- PAGE 1 — FLEET OVERVIEW -->
+            <section id="page-overview" class="page-section active space-y-6">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-white">Fleet Overview</h1>
+                    <p class="text-sm text-gray-400 font-light mt-1">Real-time inventory risk monitoring across all active products</p>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl border-t-2 border-t-brand-cyan shadow-lg">
+                        <div class="text-xs font-mono text-gray-400 uppercase tracking-wider mb-1">Total Products</div>
+                        <div id="ov-total-products" class="text-3xl font-bold text-white font-mono">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">tracked in catalog</div>
                     </div>
-                    <div class="kpi-card border-rose">
-                        <div class="kpi-label">Critical Risk</div>
-                        <div class="kpi-value rose" id="ov-critical-count">—</div>
-                        <div class="kpi-sub">immediate action needed</div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl border-t-2 border-t-brand-rose shadow-lg">
+                        <div class="text-xs font-mono text-gray-400 uppercase tracking-wider mb-1">Critical Risk</div>
+                        <div id="ov-critical-count" class="text-3xl font-bold text-brand-rose font-mono">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">immediate reorder needed</div>
                     </div>
-                    <div class="kpi-card border-amber">
-                        <div class="kpi-label">Warning Risk</div>
-                        <div class="kpi-value amber" id="ov-warning-count">—</div>
-                        <div class="kpi-sub">below reorder point</div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl border-t-2 border-t-brand-amber shadow-lg">
+                        <div class="text-xs font-mono text-gray-400 uppercase tracking-wider mb-1">Warning Risk</div>
+                        <div id="ov-warning-count" class="text-3xl font-bold text-brand-amber font-mono">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">below reorder point</div>
                     </div>
-                    <div class="kpi-card border-emerald">
-                        <div class="kpi-label">Pending Orders</div>
-                        <div class="kpi-value emerald" id="ov-pending-orders">—</div>
-                        <div class="kpi-sub">awaiting approval</div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl border-t-2 border-t-brand-emerald shadow-lg">
+                        <div class="text-xs font-mono text-gray-400 uppercase tracking-wider mb-1">Pending Orders</div>
+                        <div id="ov-pending-orders" class="text-3xl font-bold text-brand-emerald font-mono">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">awaiting approval</div>
                     </div>
                 </div>
 
-                <div class="section-header">Risk Distribution</div>
-                <div class="card-panel">
-                    <canvas id="chart-risk-distribution" height="120"></canvas>
+                <!-- Risk Distribution Bar Chart -->
+                <div class="bg-surface-dark border border-gray-800 p-6 rounded-xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-base font-semibold text-white">Risk Level Distribution</h2>
+                        <span class="text-xs font-mono text-gray-500">Live Inventory Audit</span>
+                    </div>
+                    <div class="h-56 relative">
+                        <canvas id="chart-risk-distribution"></canvas>
+                    </div>
                 </div>
 
-                <div class="section-header">Product Risk Table</div>
-                <div class="table-responsive">
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Product ID</th>
-                                <th>Risk Status</th>
-                                <th>Current Stock</th>
-                                <th>Reorder Point</th>
-                                <th>EOQ Qty</th>
-                                <th>Stock Cover</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ov-risk-table-body">
-                            <tr><td colspan="6" style="text-align:center;">Loading products...</td></tr>
-                        </tbody>
-                    </table>
+                <!-- Product Risk Table -->
+                <div class="bg-surface-dark border border-gray-800 rounded-xl overflow-hidden shadow-lg">
+                    <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center">
+                        <h2 class="text-base font-semibold text-white">Product Inventory Matrix</h2>
+                        <span class="text-xs font-mono text-gray-500">Sorted by Risk</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-black/40 text-gray-400 font-mono uppercase tracking-wider border-b border-gray-800">
+                                <tr>
+                                    <th class="py-3.5 px-6">Product ID</th>
+                                    <th class="py-3.5 px-6">Risk Status</th>
+                                    <th class="py-3.5 px-6">Current Stock</th>
+                                    <th class="py-3.5 px-6">Reorder Point</th>
+                                    <th class="py-3.5 px-6">EOQ Qty</th>
+                                    <th class="py-3.5 px-6">Days Cover</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ov-risk-table-body" class="divide-y divide-gray-800/60 font-sans">
+                                <tr><td colspan="6" class="py-6 text-center text-gray-500">Loading products...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
-            <!-- PAGE 2 — INVENTORY -->
-            <section id="page-inventory" class="page-section">
-                <h1 class="page-title">Inventory Status</h1>
-                <p class="page-sub">Per-product stock levels, safety stock buffers, reorder points, and EOQ</p>
+            <!-- PAGE 2 — INVENTORY STATUS -->
+            <section id="page-inventory" class="page-section space-y-6">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-white">Inventory Status & Mathematics</h1>
+                    <p class="text-sm text-gray-400 font-light mt-1">Deterministic Wilson EOQ calculations, safety stock buffers, and reorder triggers</p>
+                </div>
 
-                <div class="card-panel" style="margin-bottom: 24px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label" for="inv-product-select">Select Product</label>
-                        <select id="inv-product-select" class="form-control" onchange="loadInventoryDetails()"></select>
+                <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                    <label for="inv-product-select" class="block text-xs font-mono uppercase text-gray-400 mb-2">Select Target Product</label>
+                    <select id="inv-product-select" onchange="loadInventoryDetails()" class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none"></select>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Current Stock</div>
+                        <div id="inv-current-stock" class="text-3xl font-bold text-brand-cyan font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">units on hand</div>
+                    </div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Days of Cover</div>
+                        <div id="inv-days-cover" class="text-3xl font-bold text-brand-amber font-mono mt-1">—</div>
+                        <div id="inv-risk-sub" class="text-[11px] text-gray-500 mt-1">stock velocity</div>
+                    </div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Reorder Point</div>
+                        <div id="inv-reorder-point" class="text-3xl font-bold text-brand-amber font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">trigger threshold</div>
+                    </div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">EOQ Quantity</div>
+                        <div id="inv-eoq" class="text-3xl font-bold text-brand-purple font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">optimal batch size</div>
                     </div>
                 </div>
 
-                <div class="kpi-grid">
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">Current Stock</div>
-                        <div class="kpi-value cyan" id="inv-current-stock">—</div>
-                        <div class="kpi-sub">units on hand</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Safety Stock Buffer</div>
+                        <div id="inv-safety-stock" class="text-2xl font-bold text-white font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">calibrated to 95% target service level</div>
                     </div>
-                    <div class="kpi-card border-amber">
-                        <div class="kpi-label">Days of Cover</div>
-                        <div class="kpi-value amber" id="inv-days-cover">—</div>
-                        <div class="kpi-sub" id="inv-risk-sub">risk level</div>
-                    </div>
-                    <div class="kpi-card border-amber">
-                        <div class="kpi-label">Reorder Point</div>
-                        <div class="kpi-value amber" id="inv-reorder-point">—</div>
-                        <div class="kpi-sub">units (trigger threshold)</div>
-                    </div>
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">EOQ</div>
-                        <div class="kpi-value cyan" id="inv-eoq">—</div>
-                        <div class="kpi-sub">optimal order quantity</div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Supplier Lead Time</div>
+                        <div id="inv-lead-time" class="text-2xl font-bold text-white font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">lead time in business days</div>
                     </div>
                 </div>
 
-                <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">Safety Stock</div>
-                        <div class="kpi-value cyan" id="inv-safety-stock">—</div>
-                        <div class="kpi-sub">buffer stock (95% SL)</div>
-                    </div>
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">Lead Time</div>
-                        <div class="kpi-value cyan" id="inv-lead-time">—</div>
-                        <div class="kpi-sub">supplier lead time</div>
-                    </div>
-                </div>
-
-                <div class="section-header">Action Recommendation</div>
-                <div id="inv-recommendation-box" class="recommendation-banner OK">
-                    <div class="rec-title OK" id="inv-rec-title">Loading recommendation...</div>
-                    <div id="inv-rec-text" style="color:#cbd5e1; font-size:0.9rem;">—</div>
+                <!-- Action Recommendation Box -->
+                <div id="inv-recommendation-box" class="bg-surface-dark border border-gray-800 p-6 rounded-xl border-l-4 border-l-brand-emerald">
+                    <div id="inv-rec-title" class="font-bold text-lg text-brand-emerald mb-2">Recommendation</div>
+                    <p id="inv-rec-text" class="text-sm text-gray-300 font-light leading-relaxed">—</p>
                 </div>
             </section>
 
             <!-- PAGE 3 — DEMAND FORECAST -->
-            <section id="page-forecast" class="page-section">
-                <h1 class="page-title">Demand Forecast</h1>
-                <p class="page-sub">Facebook Prophet time-series predictions with 80% confidence intervals</p>
+            <section id="page-forecast" class="page-section space-y-6">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-white">Demand Forecast</h1>
+                    <p class="text-sm text-gray-400 font-light mt-1">Facebook Prophet time-series models with 80% confidence intervals</p>
+                </div>
 
-                <div class="card-panel" style="margin-bottom: 24px;">
-                    <div style="display: flex; gap: 20px; align-items: flex-end;">
-                        <div class="form-group" style="flex: 2; margin-bottom: 0;">
-                            <label class="form-label" for="fc-product-select">Select Product</label>
-                            <select id="fc-product-select" class="form-control" onchange="loadDemandForecast()"></select>
-                        </div>
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label" for="fc-days-slider">Forecast Horizon: <span id="fc-days-val">30</span> days</label>
-                            <input type="range" id="fc-days-slider" min="7" max="90" value="30" class="form-control" style="padding:4px;" oninput="document.getElementById('fc-days-val').innerText=this.value" onchange="loadDemandForecast()">
-                        </div>
+                <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                    <div class="sm:col-span-2">
+                        <label for="fc-product-select" class="block text-xs font-mono uppercase text-gray-400 mb-2">Target Product</label>
+                        <select id="fc-product-select" onchange="loadDemandForecast()" class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple focus:ring-1 focus:ring-brand-purple outline-none"></select>
+                    </div>
+                    <div>
+                        <label for="fc-days-slider" class="block text-xs font-mono uppercase text-gray-400 mb-2">Horizon: <span id="fc-days-val" class="text-brand-purple font-bold">30</span> days</label>
+                        <input type="range" id="fc-days-slider" min="7" max="90" value="30" oninput="document.getElementById('fc-days-val').innerText=this.value" onchange="loadDemandForecast()" class="w-full accent-brand-purple"/>
                     </div>
                 </div>
 
-                <div class="kpi-grid">
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">Total Forecast Demand</div>
-                        <div class="kpi-value cyan" id="fc-total-demand">—</div>
-                        <div class="kpi-sub" id="fc-horizon-sub">over forecast horizon</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Total Forecast Demand</div>
+                        <div id="fc-total-demand" class="text-3xl font-bold text-brand-purple font-mono mt-1">—</div>
+                        <div id="fc-horizon-sub" class="text-[11px] text-gray-500 mt-1">over forecast horizon</div>
                     </div>
-                    <div class="kpi-card border-cyan">
-                        <div class="kpi-label">Daily Average</div>
-                        <div class="kpi-value cyan" id="fc-daily-avg">—</div>
-                        <div class="kpi-sub">units per day</div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Daily Average</div>
+                        <div id="fc-daily-avg" class="text-3xl font-bold text-brand-cyan font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">units per day</div>
                     </div>
-                    <div class="kpi-card border-purple">
-                        <div class="kpi-label">Model Training Cutoff</div>
-                        <div class="kpi-value purple" id="fc-cutoff">—</div>
-                        <div class="kpi-sub">last historical date</div>
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <div class="text-xs font-mono text-gray-400 uppercase">Model Cutoff</div>
+                        <div id="fc-cutoff" class="text-xl font-bold text-white font-mono mt-1">—</div>
+                        <div class="text-[11px] text-gray-500 mt-1">historical training cutoff</div>
                     </div>
                 </div>
 
-                <div class="section-header">Interactive Forecast Chart</div>
-                <div class="card-panel">
-                    <canvas id="chart-forecast" height="130"></canvas>
+                <!-- Interactive Time-Series Line Chart -->
+                <div class="bg-surface-dark border border-gray-800 p-6 rounded-xl space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-base font-semibold text-white">Demand Trajectory & Confidence Interval</h2>
+                        <span class="text-xs font-mono text-brand-purple bg-brand-purple/10 px-2 py-0.5 rounded">Prophet Model</span>
+                    </div>
+                    <div class="h-72 relative">
+                        <canvas id="chart-forecast"></canvas>
+                    </div>
                 </div>
             </section>
 
             <!-- PAGE 4 — PURCHASE ORDERS -->
-            <section id="page-orders" class="page-section">
-                <h1 class="page-title">Purchase Orders</h1>
-                <p class="page-sub">Review pending orders and create new replenishment requests</p>
+            <section id="page-orders" class="page-section space-y-6">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-white">Purchase Orders</h1>
+                    <p class="text-sm text-gray-400 font-light mt-1">Human-in-the-loop order approval workflow and creation interface</p>
+                </div>
 
-                <div class="tab-container">
-                    <button class="tab-btn active" onclick="switchOrderTab('pending')">⏳ Pending Orders</button>
-                    <button class="tab-btn" onclick="switchOrderTab('all')">📋 All Orders</button>
-                    <button class="tab-btn" onclick="switchOrderTab('create')">➕ Create Order</button>
+                <!-- Sub Tab Navigation -->
+                <div class="flex space-x-2 border-b border-gray-800 pb-3">
+                    <button onclick="switchOrderTab('pending')" class="ord-tab-btn active px-4 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-colors bg-brand-purple text-white">⏳ Pending Approval</button>
+                    <button onclick="switchOrderTab('all')" class="ord-tab-btn px-4 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-surface-dark">📋 All Orders</button>
+                    <button onclick="switchOrderTab('create')" class="ord-tab-btn px-4 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-surface-dark">➕ Create Order</button>
                 </div>
 
                 <!-- Tab 1: Pending Orders -->
-                <div id="ord-tab-pending" class="tab-content active">
-                    <div id="pending-orders-container">Loading pending orders...</div>
+                <div id="ord-tab-pending" class="tab-content active space-y-4">
+                    <div id="pending-orders-container" class="space-y-4">Loading pending orders...</div>
                 </div>
 
                 <!-- Tab 2: All Orders -->
-                <div id="ord-tab-all" class="tab-content">
-                    <div class="card-panel" style="margin-bottom: 20px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="ord-filter-status">Filter by Status</label>
-                            <select id="ord-filter-status" class="form-control" onchange="loadAllOrders()">
-                                <option value="All">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
+                <div id="ord-tab-all" class="tab-content space-y-4">
+                    <div class="bg-surface-dark border border-gray-800 p-4 rounded-xl max-w-xs">
+                        <label for="ord-filter-status" class="block text-xs font-mono uppercase text-gray-400 mb-1">Filter Status</label>
+                        <select id="ord-filter-status" onchange="loadAllOrders()" class="w-full bg-black/50 border border-gray-700 text-white text-xs rounded-lg p-2 focus:border-brand-purple outline-none">
+                            <option value="All">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
                     </div>
-                    <div class="table-responsive">
-                        <table class="styled-table">
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th>Supplier</th>
-                                    <th>Total Cost</th>
-                                    <th>Status</th>
-                                    <th>Created At</th>
-                                </tr>
-                            </thead>
-                            <tbody id="all-orders-table-body">
-                                <tr><td colspan="7" style="text-align:center;">Loading orders...</td></tr>
-                            </tbody>
-                        </table>
+
+                    <div class="bg-surface-dark border border-gray-800 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-black/40 text-gray-400 font-mono uppercase tracking-wider border-b border-gray-800">
+                                    <tr>
+                                        <th class="py-3 px-6">Order ID</th>
+                                        <th class="py-3 px-6">Product</th>
+                                        <th class="py-3 px-6">Quantity</th>
+                                        <th class="py-3 px-6">Supplier</th>
+                                        <th class="py-3 px-6">Total Cost</th>
+                                        <th class="py-3 px-6">Status</th>
+                                        <th class="py-3 px-6">Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="all-orders-table-body" class="divide-y divide-gray-800/60 font-sans">
+                                    <tr><td colspan="7" class="py-6 text-center text-gray-500">Loading orders...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Tab 3: Create Order Form -->
                 <div id="ord-tab-create" class="tab-content">
-                    <div class="card-panel" style="max-width: 650px;">
-                        <div class="section-header" style="margin-top:0;">Create Replenishment Purchase Order</div>
-                        <form onsubmit="handleCreateOrder(event)">
-                            <div class="form-group">
-                                <label class="form-label" for="po-product-select">Product</label>
-                                <select id="po-product-select" class="form-control" required></select>
+                    <div class="bg-surface-dark border border-gray-800 p-6 rounded-xl max-w-xl space-y-4">
+                        <h2 class="text-base font-semibold text-white">Create Replenishment Purchase Order</h2>
+                        <form onsubmit="handleCreateOrder(event)" class="space-y-4">
+                            <div>
+                                <label for="po-product-select" class="block text-xs font-mono uppercase text-gray-400 mb-1">Target Product</label>
+                                <select id="po-product-select" required class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none"></select>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" for="po-quantity-input">Order Quantity (Units)</label>
-                                <input type="number" id="po-quantity-input" class="form-control" min="1" value="500" required>
+                            <div>
+                                <label for="po-quantity-input" class="block text-xs font-mono uppercase text-gray-400 mb-1">Order Quantity (Units)</label>
+                                <input type="number" id="po-quantity-input" min="1" value="500" required class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none"/>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" for="po-reason-input">Business Reason</label>
-                                <textarea id="po-reason-input" class="form-control" rows="3" required>Replenishment order for stock cover below reorder point.</textarea>
+                            <div>
+                                <label for="po-reason-input" class="block text-xs font-mono uppercase text-gray-400 mb-1">Business Reason</label>
+                                <textarea id="po-reason-input" rows="3" required class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none">Replenishment order for stock cover below reorder point.</textarea>
                             </div>
-                            <button type="submit" class="btn">➕ Create Purchase Order</button>
+                            <button type="submit" class="w-full py-3 bg-brand-purple hover:bg-purple-600 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-brand-purple/20">➕ Create Purchase Order</button>
                         </form>
                     </div>
                 </div>
             </section>
 
             <!-- PAGE 5 — AGENT CHAT -->
-            <section id="page-chat" class="page-section">
-                <h1 class="page-title">Agent Chat</h1>
-                <p class="page-sub">Ask SupplyPilot anything about your supply chain</p>
-
-                <div class="section-header">Suggested Questions</div>
-                <div class="suggested-prompts">
-                    <div class="prompt-card" onclick="sendAgentQuestion('Which products are at WARNING or CRITICAL stock risk?')">
-                        ❓ Which products are at WARNING or CRITICAL stock risk?
-                    </div>
-                    <div class="prompt-card" onclick="sendAgentQuestion('Show me the inventory status for product 85.')">
-                        ❓ Show me the inventory status for product 85.
-                    </div>
-                    <div class="prompt-card" onclick="sendAgentQuestion('What is the 14-day demand forecast for product 262?')">
-                        ❓ What is the 14-day demand forecast for product 262?
-                    </div>
-                    <div class="prompt-card" onclick="sendAgentQuestion('What is the fill rate penalty for Apex Supply Co?')">
-                        ❓ What is the fill rate penalty for Apex Supply Co?
-                    </div>
+            <section id="page-chat" class="page-section space-y-6">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-white">Autonomous Agent Chat</h1>
+                    <p class="text-sm text-gray-400 font-light mt-1">LangChain agent equipped with 10 deterministic tools and Groq reasoning</p>
                 </div>
 
-                <div class="card-panel" style="padding: 20px;">
-                    <div id="chat-history" class="chat-messages">
-                        <div class="chat-bubble-agent">
-                            🤖 Hello! I am SupplyPilot, your autonomous supply chain assistant. I can inspect stock levels, run demand forecasts, place purchase orders, and search supplier contracts. How can I help you today?
+                <!-- Suggested Prompt Pills -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button onclick="sendAgentQuestion('Which products are at WARNING or CRITICAL stock risk?')" class="p-3 bg-surface-dark border border-gray-800 hover:border-brand-purple/50 rounded-lg text-left text-xs text-gray-300 transition-all hover:bg-surface-card group">
+                        <span class="text-brand-purple font-mono">Q:</span> Which products are at WARNING or CRITICAL stock risk?
+                    </button>
+                    <button onclick="sendAgentQuestion('Show me the inventory status for product 85.')" class="p-3 bg-surface-dark border border-gray-800 hover:border-brand-purple/50 rounded-lg text-left text-xs text-gray-300 transition-all hover:bg-surface-card group">
+                        <span class="text-brand-cyan font-mono">Q:</span> Show me the inventory status for product 85.
+                    </button>
+                    <button onclick="sendAgentQuestion('What is the 14-day demand forecast for product 262?')" class="p-3 bg-surface-dark border border-gray-800 hover:border-brand-purple/50 rounded-lg text-left text-xs text-gray-300 transition-all hover:bg-surface-card group">
+                        <span class="text-brand-amber font-mono">Q:</span> What is the 14-day demand forecast for product 262?
+                    </button>
+                    <button onclick="sendAgentQuestion('What is the fill rate penalty for Apex Supply Co?')" class="p-3 bg-surface-dark border border-gray-800 hover:border-brand-purple/50 rounded-lg text-left text-xs text-gray-300 transition-all hover:bg-surface-card group">
+                        <span class="text-brand-emerald font-mono">Q:</span> What is the fill rate penalty for Apex Supply Co?
+                    </button>
+                </div>
+
+                <!-- Chat History Window -->
+                <div class="bg-surface-dark border border-gray-800 p-6 rounded-xl space-y-4">
+                    <div id="chat-history" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                        <div class="bg-surface-card border border-gray-800/80 p-4 rounded-xl text-sm leading-relaxed text-gray-300">
+                            <span class="text-brand-purple font-semibold">🤖 SupplyPilot:</span> Hello! I am SupplyPilot, your autonomous supply chain assistant. I can inspect stock levels, run demand forecasts, place purchase orders, and search supplier contracts. How can I help you today?
                         </div>
                     </div>
 
-                    <form onsubmit="handleAgentFormSubmit(event)" class="chat-input-bar">
-                        <input type="text" id="chat-input-field" class="form-control" placeholder="Ask SupplyPilot a question..." required>
-                        <button type="submit" class="btn">Send ➤</button>
+                    <form onsubmit="handleAgentFormSubmit(event)" class="flex space-x-3 pt-2">
+                        <input type="text" id="chat-input-field" required placeholder="Ask SupplyPilot a question..." class="flex-1 bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-3 focus:border-brand-purple outline-none"/>
+                        <button type="submit" class="px-6 py-3 bg-brand-purple hover:bg-purple-600 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-brand-purple/20">Send <i class="fa-solid fa-paper-plane ml-1"></i></button>
                     </form>
                 </div>
             </section>
 
             <!-- PAGE 6 — SUPPLIER INTELLIGENCE (RAG) -->
-            <section id="page-rag" class="page-section">
-                <h1 class="page-title">Supplier Document Intelligence (RAG)</h1>
-                <p class="page-sub">Semantic search across contracts, SLAs, and policies powered by pgvector embeddings</p>
-
-                <div class="tab-container">
-                    <button class="tab-btn active" onclick="switchRagTab('search')">🔍 Semantic Search</button>
-                    <button class="tab-btn" onclick="switchRagTab('upload')">📤 Ingest Document</button>
-                    <button class="tab-btn" onclick="switchRagTab('catalog')">📁 Document Library</button>
+            <section id="page-rag" class="page-section space-y-6">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-white">Supplier Document Intelligence (RAG)</h1>
+                    <p class="text-sm text-gray-400 font-light mt-1">Vector similarity search across SLAs and contracts powered by pgvector & all-MiniLM-L6-v2</p>
                 </div>
 
-                <!-- Tab 1: Semantic Search -->
-                <div id="rag-tab-search" class="tab-content active">
-                    <div class="card-panel">
-                        <div class="section-header" style="margin-top:0;">Search Supplier Documents</div>
-                        <form onsubmit="handleRagSearch(event)">
-                            <div style="display: flex; gap: 14px; margin-bottom: 14px;">
-                                <input type="text" id="rag-query-input" class="form-control" style="flex:3;" placeholder="e.g. What is the fill rate penalty for Apex Supply Co?" required>
-                                <input type="text" id="rag-supplier-filter" class="form-control" style="flex:1.5;" placeholder="Supplier filter (optional)">
-                                <select id="rag-type-filter" class="form-control" style="flex:1.5;">
-                                    <option value="">All Types</option>
+                <div class="flex space-x-2 border-b border-gray-800 pb-3">
+                    <button onclick="switchRagTab('search')" class="rag-tab-btn active px-4 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-colors bg-brand-purple text-white">🔍 Vector Search</button>
+                    <button onclick="switchRagTab('upload')" class="rag-tab-btn px-4 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-surface-dark">📤 Ingest Document</button>
+                    <button onclick="switchRagTab('catalog')" class="rag-tab-btn px-4 py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-colors text-gray-400 hover:text-white hover:bg-surface-dark">📁 Document Library</button>
+                </div>
+
+                <!-- Tab 1: Vector Search -->
+                <div id="rag-tab-search" class="tab-content active space-y-4">
+                    <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                        <form onsubmit="handleRagSearch(event)" class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                <input type="text" id="rag-query-input" required placeholder="e.g. What is the fill rate penalty for Apex Supply Co?" class="sm:col-span-6 bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none"/>
+                                <input type="text" id="rag-supplier-filter" placeholder="Supplier filter (optional)" class="sm:col-span-3 bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none"/>
+                                <select id="rag-type-filter" class="sm:col-span-3 bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none">
+                                    <option value="">All Doc Types</option>
                                     <option value="contract">contract</option>
                                     <option value="sla">sla</option>
                                     <option value="policy">policy</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn">🔎 Search Documents</button>
+                            <button type="submit" class="px-6 py-2.5 bg-brand-purple hover:bg-purple-600 text-white text-xs font-mono uppercase tracking-wider rounded-lg transition-colors shadow-lg shadow-brand-purple/20">🔎 Search Vector Database</button>
                         </form>
                     </div>
 
-                    <div id="rag-results-container"></div>
+                    <div id="rag-results-container" class="space-y-4"></div>
                 </div>
 
-                <!-- Tab 2: Document Ingestion -->
+                <!-- Tab 2: Document Upload -->
                 <div id="rag-tab-upload" class="tab-content">
-                    <div class="card-panel" style="max-width: 650px;">
-                        <div class="section-header" style="margin-top:0;">Upload New Supplier Contract or SLA</div>
-                        <form onsubmit="handleDocumentUpload(event)">
-                            <div class="form-group">
-                                <label class="form-label" for="rag-file-input">Choose Document (.pdf or .txt)</label>
-                                <input type="file" id="rag-file-input" class="form-control" accept=".pdf,.txt" required>
+                    <div class="bg-surface-dark border border-gray-800 p-6 rounded-xl max-w-xl space-y-4">
+                        <h2 class="text-base font-semibold text-white">Ingest & Vectorize New Document</h2>
+                        <form onsubmit="handleDocumentUpload(event)" class="space-y-4">
+                            <div>
+                                <label for="rag-file-input" class="block text-xs font-mono uppercase text-gray-400 mb-1">Choose File (.pdf or .txt)</label>
+                                <input type="file" id="rag-file-input" accept=".pdf,.txt" required class="w-full bg-black/50 border border-gray-700 text-white text-xs rounded-lg p-2.5 focus:border-brand-purple outline-none"/>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" for="rag-supplier-name">Supplier Name</label>
-                                <input type="text" id="rag-supplier-name" class="form-control" placeholder="e.g. Apex Supply Co" required>
+                            <div>
+                                <label for="rag-supplier-name" class="block text-xs font-mono uppercase text-gray-400 mb-1">Supplier Name</label>
+                                <input type="text" id="rag-supplier-name" placeholder="e.g. Apex Supply Co" required class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none"/>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" for="rag-doc-type">Document Type</label>
-                                <select id="rag-doc-type" class="form-control">
+                            <div>
+                                <label for="rag-doc-type" class="block text-xs font-mono uppercase text-gray-400 mb-1">Document Type</label>
+                                <select id="rag-doc-type" class="w-full bg-black/50 border border-gray-700 text-white text-sm rounded-lg p-2.5 focus:border-brand-purple outline-none">
                                     <option value="contract">contract</option>
                                     <option value="sla">sla</option>
                                     <option value="policy">policy</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn">📤 Ingest & Vectorize Document</button>
+                            <button type="submit" class="w-full py-3 bg-brand-purple hover:bg-purple-600 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-brand-purple/20">📤 Chunk, Embed & Store in pgvector</button>
                         </form>
                     </div>
                 </div>
 
                 <!-- Tab 3: Catalog -->
-                <div id="rag-tab-catalog" class="tab-content">
-                    <div class="kpi-grid">
-                        <div class="kpi-card border-cyan">
-                            <div class="kpi-label">Total Documents</div>
-                            <div class="kpi-value cyan" id="rag-total-docs">—</div>
-                            <div class="kpi-sub">indexed in pgvector</div>
+                <div id="rag-tab-catalog" class="tab-content space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Total Documents</div>
+                            <div id="rag-total-docs" class="text-3xl font-bold text-brand-purple font-mono mt-1">—</div>
+                            <div class="text-[11px] text-gray-500 mt-1">indexed in vector store</div>
                         </div>
-                        <div class="kpi-card border-emerald">
-                            <div class="kpi-label">Suppliers Covered</div>
-                            <div class="kpi-value emerald" id="rag-suppliers-count">—</div>
-                            <div class="kpi-sub">active suppliers</div>
+                        <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Active Suppliers</div>
+                            <div id="rag-suppliers-count" class="text-3xl font-bold text-brand-emerald font-mono mt-1">—</div>
+                            <div class="text-[11px] text-gray-500 mt-1">suppliers covered</div>
                         </div>
-                        <div class="kpi-card border-purple">
-                            <div class="kpi-label">Document Types</div>
-                            <div class="kpi-value purple" id="rag-types-count">—</div>
-                            <div class="kpi-sub">SLAs, Contracts, Policies</div>
+                        <div class="bg-surface-dark border border-gray-800 p-5 rounded-xl">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Document Types</div>
+                            <div id="rag-types-count" class="text-3xl font-bold text-brand-cyan font-mono mt-1">—</div>
+                            <div class="text-[11px] text-gray-500 mt-1">SLAs, Contracts, Policies</div>
                         </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="styled-table">
-                            <thead>
-                                <tr>
-                                    <th>Doc ID</th>
-                                    <th>Filename</th>
-                                    <th>Supplier Name</th>
-                                    <th>Doc Type</th>
-                                    <th>Pages</th>
-                                    <th>Uploaded At</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rag-catalog-table-body">
-                                <tr><td colspan="6" style="text-align:center;">Loading catalog...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="bg-surface-dark border border-gray-800 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-black/40 text-gray-400 font-mono uppercase tracking-wider border-b border-gray-800">
+                                    <tr>
+                                        <th class="py-3 px-6">Doc ID</th>
+                                        <th class="py-3 px-6">Filename</th>
+                                        <th class="py-3 px-6">Supplier</th>
+                                        <th class="py-3 px-6">Type</th>
+                                        <th class="py-3 px-6">Pages</th>
+                                        <th class="py-3 px-6">Uploaded At</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rag-catalog-table-body" class="divide-y divide-gray-800/60 font-sans">
+                                    <tr><td colspan="6" class="py-6 text-center text-gray-500">Loading document library...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -403,7 +510,7 @@
         </main>
     </div>
 
-    <!-- Application Script -->
+    <!-- Application JavaScript -->
     <script src="/static/app.js"></script>
 </body>
 </html>

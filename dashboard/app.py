@@ -572,21 +572,23 @@ elif page == "🤖  Agent Chat":
     if "chat_messages" not in st.session_state:
         st.session_state.chat_messages = []   # list of {"role": "user"|"assistant", "content": str, "meta": dict}
 
-    # Suggested prompts
+    prompt_to_process = None
+
+    # Suggested prompts (shown when conversation is empty)
     if not st.session_state.chat_messages:
         st.markdown('<div class="section-header">Suggested questions</div>', unsafe_allow_html=True)
         suggestions = [
             "Which products are at WARNING or CRITICAL stock risk?",
             "Show me the inventory status for product 85.",
             "What is the 14-day demand forecast for product 262?",
-            "Create a purchase order for 500 units of product 274.",
+            "What is the fill rate penalty for Apex Supply Co?",
         ]
         cols = st.columns(2)
         for i, s in enumerate(suggestions):
             if cols[i % 2].button(s, key=f"sug_{i}"):
-                st.session_state.pending_question = s
+                prompt_to_process = s
 
-    # Render existing messages
+    # Render existing conversation messages
     for msg in st.session_state.chat_messages:
         if msg["role"] == "user":
             st.markdown(f'<div class="chat-user">🧑 {msg["content"]}</div>', unsafe_allow_html=True)
@@ -595,25 +597,21 @@ elif page == "🤖  Agent Chat":
             tools_html = " ".join(f'<span class="tool-pill">{t}</span>' for t in meta.get("tools_used", []))
             meta_line = ""
             if tools_html:
-                meta_line = f'<div class="agent-meta">Tools: {tools_html} &nbsp;·&nbsp; Steps: {meta.get("steps", "?")} </div>'
+                meta_line = f'<div class="agent-meta">Tools: {tools_html} &nbsp;·&nbsp; Steps: {meta.get("steps", "?")}</div>'
             st.markdown(
                 f'<div class="chat-agent">🤖 {msg["content"]}{meta_line}</div>',
                 unsafe_allow_html=True,
             )
 
-    # Chat input
-    with st.form("chat_form", clear_on_submit=True):
-        user_input = st.text_input(
-            "Ask a question…",
-            value=st.session_state.pop("pending_question", ""),
-            placeholder="e.g. Which products need reordering?",
-            label_visibility="collapsed",
-        )
-        send = st.form_submit_button("Send  ➤")
+    # Native chat input box
+    user_typed_input = st.chat_input("Ask SupplyPilot a question...")
+    if user_typed_input and user_typed_input.strip():
+        prompt_to_process = user_typed_input.strip()
 
-    if send and user_input.strip():
-        # Add user message to history
-        st.session_state.chat_messages.append({"role": "user", "content": user_input.strip()})
+    # Execute agent call if user typed input or clicked a suggested question
+    if prompt_to_process:
+        st.session_state.chat_messages.append({"role": "user", "content": prompt_to_process})
+        st.markdown(f'<div class="chat-user">🧑 {prompt_to_process}</div>', unsafe_allow_html=True)
 
         # Build chat_history for multi-turn context (pairs of user/ai turns)
         history_pairs = []
@@ -626,13 +624,13 @@ elif page == "🤖  Agent Chat":
             else:
                 i += 1
 
-        with st.spinner("SupplyPilot is thinking…"):
+        with st.spinner("SupplyPilot is thinking..."):
             try:
-                result = agent_chat(user_input.strip(), chat_history=history_pairs)
+                result = agent_chat(prompt_to_process, chat_history=history_pairs)
                 st.session_state.chat_messages.append({
                     "role": "assistant",
                     "content": result["answer"],
-                    "meta": {"tools_used": result["tools_used"], "steps": result["steps"]},
+                    "meta": {"tools_used": result.get("tools_used", []), "steps": result.get("steps", 0)},
                 })
             except APIError as exc:
                 st.session_state.chat_messages.append({
@@ -649,6 +647,7 @@ elif page == "🤖  Agent Chat":
         if st.button("🗑️  Clear conversation"):
             st.session_state.chat_messages = []
             st.rerun()
+
 
 
 # ===========================================================================
